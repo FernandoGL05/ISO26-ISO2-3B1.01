@@ -1,0 +1,28 @@
+name: Build con Maven           
+on:                             
+push:
+branches: [ main, develop ]
+pull_request:
+branches: [ main, develop ]
+jobs:
+build:                        
+runs-on: ubuntu-latest      
+steps:                      
+# nombre en la pestaña Actions
+# EVENTO: cuándo se ejecuta
+# JOB: es el nombre del check- name: Descargar el código
+uses: actions/checkout@v7- name: Instalar Java 21
+uses: actions/setup-java@v6
+with:
+distribution: temurin
+java-version: '21'    
+cache: maven          
+# RUNNER: máquina virtual Linux
+# STEPS: se ejecutan en orden
+# igual que en el pom
+# guarda las dependencias- name: Compilar y pasar los tests
+run: mvn -B verify      
+# -B: sin preguntas
+# Opción: empaquetar SIN pasar los tests
+# - name: Compilar sin tests
+#   run: mvn -B package -DskipTests
