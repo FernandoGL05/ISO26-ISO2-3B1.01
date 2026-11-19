@@ -39,10 +39,8 @@ Consecuencias: base reutilizable para el resto de casos de uso
   `ServicioAutenticacion`.
 Prompts utilizados:
 1. "Analiza este repositorio \"https://github.com/FernandoGL05/ISO26-ISO2-3B1.01\" implementa el primer caso de uso que está en su respectivo apartado de la wiki (te proporciono imagen por si acaso) y sube el código al repositorio"
-2. "Con qué cuenta estás intentando hacer push?"
-3. "Hazla con la cuenta de la universidad javier.herreros3@alu.uclm.es"
-4. "A continuación quiero que:
-1. Analiza por qué he tenido que subirlo yo a mano y corrijelo, seguramente sea alguna cosa de windows.
-2. Documenta todo el proceso del código que has hecho.
-3. Escribe en el decisions.md todos los prompts que te he dado (incluyendo este)."
+2. "A continuación quiero que:
+3. Analiza por qué he tenido que subirlo yo a mano y corrijelo, seguramente sea alguna cosa de windows.
+4. Documenta todo el proceso del código que has hecho.
+5. Escribe en el decisions.md todos los prompts que te he dado (incluyendo este)."
 
