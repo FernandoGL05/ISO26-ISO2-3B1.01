@@ -14,3 +14,5 @@ Motivo: un mvn verify construye todo y las
   versiones se fijan una vez en el padre.
 Consecuencias: cada módulo con su versión; al
   cambiar la del padre, actualizar <parent>.
+
+  
