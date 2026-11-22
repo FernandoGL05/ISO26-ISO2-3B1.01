@@ -1,6 +1,7 @@
 package es.uclm.esi.iso2.B101.servidor.dominio;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.LocalDateTime;
@@ -22,8 +23,16 @@ class CitaTest {
 
         assertEquals("cita-1", cita.getId());
         assertEquals("paciente-1", cita.getPacienteId());
+        assertNull(cita.getMedicoId());
         assertEquals("radiografia", cita.getTipoPrueba());
         assertEquals(FECHA_HORA, cita.getFechaHora());
+    }
+
+    @Test
+    void permiteAsociarLaCitaAUnMedico() {
+        Cita cita = new Cita("cita-1", "paciente-1", "medico-1", "RM", FECHA_HORA);
+
+        assertEquals("medico-1", cita.getMedicoId());
     }
 
     @Test
@@ -49,6 +58,12 @@ class CitaTest {
                 () -> new Cita("cita-1", null, "radiografia", FECHA_HORA));
         assertThrows(IllegalArgumentException.class,
                 () -> new Cita("cita-1", "", "radiografia", FECHA_HORA));
+    }
+
+    @Test
+    void rechazaMedicoIdVacio() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new Cita("cita-1", "paciente-1", "", "RM", FECHA_HORA));
     }
 
     @Test

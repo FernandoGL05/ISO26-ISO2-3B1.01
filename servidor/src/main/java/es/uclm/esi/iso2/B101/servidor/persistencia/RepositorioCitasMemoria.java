@@ -36,6 +36,19 @@ public class RepositorioCitasMemoria implements RepositorioCitas {
         return citasDelPaciente;
     }
 
+    @Override
+    public List<Cita> buscarPorMedicoId(String medicoId) {
+        validarIdentificador(medicoId, "medicoId");
+
+        List<Cita> citasDelMedico = new ArrayList<>();
+        for (Cita cita : citas.values()) {
+            if (medicoId.equals(cita.getMedicoId())) {
+                citasDelMedico.add(cita);
+            }
+        }
+        return citasDelMedico;
+    }
+
     private void validarIdentificador(String identificador, String nombre) {
         if (identificador == null || identificador.isBlank()) {
             throw new IllegalArgumentException(nombre + " no puede ser nulo ni estar vacío");

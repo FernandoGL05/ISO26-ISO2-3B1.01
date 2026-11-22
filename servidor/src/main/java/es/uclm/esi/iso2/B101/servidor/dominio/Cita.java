@@ -5,16 +5,24 @@ import java.time.LocalDateTime;
 public class Cita {
     private final String id;
     private final String pacienteId;
+    private final String medicoId;
     private final String tipoPrueba;
     private final LocalDateTime fechaHora;
     private EstadoCita estado;
 
     public Cita(String id, String pacienteId, String tipoPrueba, LocalDateTime fechaHora) {
+        this(id, pacienteId, null, tipoPrueba, fechaHora);
+    }
+
+    public Cita(String id, String pacienteId, String medicoId, String tipoPrueba, LocalDateTime fechaHora) {
         if (id == null || id.isBlank()) {
             throw new IllegalArgumentException("id no puede ser nulo ni estar vacío");
         }
         if (pacienteId == null || pacienteId.isBlank()) {
             throw new IllegalArgumentException("pacienteId no puede ser nulo ni estar vacío");
+        }
+        if (medicoId != null && medicoId.isBlank()) {
+            throw new IllegalArgumentException("medicoId no puede estar vacío");
         }
         if (tipoPrueba == null || tipoPrueba.isBlank()) {
             throw new IllegalArgumentException("tipoPrueba no puede ser nulo ni estar vacío");
@@ -25,6 +33,7 @@ public class Cita {
 
         this.id = id;
         this.pacienteId = pacienteId;
+        this.medicoId = medicoId;
         this.tipoPrueba = tipoPrueba;
         this.fechaHora = fechaHora;
         this.estado = EstadoCita.PROGRAMADA;
@@ -36,6 +45,10 @@ public class Cita {
 
     public String getPacienteId() {
         return pacienteId;
+    }
+
+    public String getMedicoId() {
+        return medicoId;
     }
 
     public String getTipoPrueba() {
@@ -55,5 +68,9 @@ public class Cita {
             throw new IllegalStateException("No se puede confirmar una cita cancelada");
         }
         estado = EstadoCita.CONFIRMADA;
+    }
+
+    public void cancelar() {
+        estado = EstadoCita.CANCELADA;
     }
 }

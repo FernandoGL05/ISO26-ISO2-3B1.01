@@ -59,6 +59,16 @@ class RepositorioCitasMemoriaTest {
     }
 
     @Test
+    void buscaCitasAsociadasAlMedico() {
+        Cita citaDelMedico = new Cita("cita-1", "paciente-1", "medico-1", "RM", FECHA_HORA);
+        repositorio.guardar(citaDelMedico);
+        repositorio.guardar(new Cita("cita-2", "paciente-2", "medico-2", "TAC", FECHA_HORA));
+        repositorio.guardar(crearCita("cita-3", "paciente-3"));
+
+        assertEquals(List.of(citaDelMedico), repositorio.buscarPorMedicoId("medico-1"));
+    }
+
+    @Test
     void devuelveListaVaciaSiElPacienteNoTieneCitas() {
         List<Cita> citas = repositorio.buscarPorPacienteId("paciente-sin-citas");
 
