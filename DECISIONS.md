@@ -81,4 +81,12 @@
 - **Alternativas:** permitir consulta a cualquier usuario médico o almacenar referencias externas a las imágenes.
 - **Motivo:** mantener el informe asociado al historial de la prueba y limitar la exposición de información clínica a las identidades relacionadas.
 - **Consecuencias:** en esta versión se admiten imágenes PNG o JPEG de hasta 5 MiB en memoria; los datos se pierden al reiniciar. Quedan pendientes la persistencia duradera, formatos de imagen médica como DICOM y la integración del autorizador con la autenticación real.
+
+## D-011 · Registrar realización o incidencia de una prueba
+- **Fecha:** 22/11/2026
+- **Contexto:** es necesario registrar el resultado de las pruebas programadas y dejar constancia cuando no pueden completarse.
+- **Decisión:** el médico asignado a la cita registra la prueba realizada o una incidencia de realización. La realización actualiza el estado de la cita y crea una entrada en el historial del paciente; la incidencia se registra en el CU05 y mantiene la cita sin marcar como realizada.
+- **Alternativas:** permitir registrar resultados a cualquier médico; guardar las incidencias en un módulo separado del CU05.
+- **Motivo:** vincular el registro clínico a la cita y reutilizar el seguimiento de incidencias ya disponible, evitando duplicar su gestión.
+- **Consecuencias:** las citas canceladas o asignadas a otro médico no admiten registro de resultado. No se puede registrar dos veces una realización para la misma cita. Los datos se almacenan en memoria y la sesión médica se valida mediante el autorizador inyectado.
  

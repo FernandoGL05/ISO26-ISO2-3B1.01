@@ -67,10 +67,26 @@ public class Cita {
         if (estado == EstadoCita.CANCELADA) {
             throw new IllegalStateException("No se puede confirmar una cita cancelada");
         }
+        if (estado == EstadoCita.REALIZADA) {
+            throw new IllegalStateException("No se puede confirmar una cita ya realizada");
+        }
         estado = EstadoCita.CONFIRMADA;
     }
 
     public void cancelar() {
+        if (estado == EstadoCita.REALIZADA) {
+            throw new IllegalStateException("No se puede cancelar una cita ya realizada");
+        }
         estado = EstadoCita.CANCELADA;
+    }
+
+    public void marcarRealizada() {
+        if (estado == EstadoCita.CANCELADA) {
+            throw new IllegalStateException("No se puede registrar la realización de una cita cancelada");
+        }
+        if (estado == EstadoCita.REALIZADA) {
+            throw new IllegalStateException("La cita ya está registrada como realizada");
+        }
+        estado = EstadoCita.REALIZADA;
     }
 }

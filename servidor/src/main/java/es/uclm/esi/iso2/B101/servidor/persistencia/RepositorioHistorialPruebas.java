@@ -10,4 +10,6 @@ public interface RepositorioHistorialPruebas {
     Optional<PruebaRealizada> buscarPorId(String id);
 
     List<PruebaRealizada> buscarPorPacienteId(String pacienteId);
+
+    Optional<PruebaRealizada> buscarPorCitaId(String citaId);
 }

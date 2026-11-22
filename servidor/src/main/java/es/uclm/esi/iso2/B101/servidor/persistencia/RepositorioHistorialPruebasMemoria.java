@@ -9,9 +9,12 @@ public final class RepositorioHistorialPruebasMemoria implements RepositorioHist
     private final ConcurrentHashMap<String, PruebaRealizada> pruebas = new ConcurrentHashMap<>();
 
     @Override
-    public void registrar(PruebaRealizada prueba) {
+    public synchronized void registrar(PruebaRealizada prueba) {
         if (prueba == null) {
             throw new IllegalArgumentException("La prueba no puede ser nula");
+        }
+        if (prueba.getCitaId() != null && buscarPorCitaId(prueba.getCitaId()).isPresent()) {
+            throw new IllegalStateException("Ya existe una prueba realizada para esa cita");
         }
         if (pruebas.putIfAbsent(prueba.getId(), prueba) != null) {
             throw new IllegalStateException("Ya existe una prueba con ese identificador");
@@ -30,6 +33,14 @@ public final class RepositorioHistorialPruebasMemoria implements RepositorioHist
         return pruebas.values().stream()
                 .filter(prueba -> prueba.getPacienteId().equals(pacienteId))
                 .toList();
+    }
+
+    @Override
+    public Optional<PruebaRealizada> buscarPorCitaId(String citaId) {
+        validarIdentificador(citaId, "citaId");
+        return pruebas.values().stream()
+                .filter(prueba -> citaId.equals(prueba.getCitaId()))
+                .findFirst();
     }
 
     private static void validarIdentificador(String identificador, String nombre) {

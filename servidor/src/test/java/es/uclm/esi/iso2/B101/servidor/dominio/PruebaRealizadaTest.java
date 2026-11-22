@@ -20,6 +20,21 @@ class PruebaRealizadaTest {
         assertEquals("Radiografía", prueba.getTipoPrueba());
         assertEquals(FECHA, prueba.getFechaHoraRealizacion());
         assertNull(prueba.getSolicitudId());
+        assertNull(prueba.getCitaId());
+    }
+
+    @Test
+    void admiteVinculoOpcionalConCita() {
+        PruebaRealizada prueba =
+                new PruebaRealizada("prueba-1", "paciente-1", "RM", FECHA, null, "cita-1");
+
+        assertEquals("cita-1", prueba.getCitaId());
+    }
+
+    @Test
+    void rechazaIdentificadorDeCitaVacio() {
+        assertThrows(IllegalArgumentException.class, () -> new PruebaRealizada(
+                "prueba-1", "paciente-1", "RM", FECHA, null, " "));
     }
 
     @Test

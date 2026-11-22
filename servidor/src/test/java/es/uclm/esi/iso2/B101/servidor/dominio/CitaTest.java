@@ -45,6 +45,27 @@ class CitaTest {
     }
 
     @Test
+    void marcarRealizadaActualizaElEstadoYBloqueaTransicionesIncompatibles() {
+        Cita cita = crearCita();
+
+        cita.marcarRealizada();
+
+        assertEquals(EstadoCita.REALIZADA, cita.getEstado());
+        assertThrows(IllegalStateException.class, cita::marcarRealizada);
+        assertThrows(IllegalStateException.class, cita::confirmar);
+        assertThrows(IllegalStateException.class, cita::cancelar);
+    }
+
+    @Test
+    void noPermiteMarcarComoRealizadaUnaCitaCancelada() {
+        Cita cita = crearCita();
+        cita.cancelar();
+
+        assertThrows(IllegalStateException.class, cita::marcarRealizada);
+        assertEquals(EstadoCita.CANCELADA, cita.getEstado());
+    }
+
+    @Test
     void rechazaIdentificadorNuloOVacio() {
         assertThrows(IllegalArgumentException.class,
                 () -> new Cita(null, "paciente-1", "radiografia", FECHA_HORA));
