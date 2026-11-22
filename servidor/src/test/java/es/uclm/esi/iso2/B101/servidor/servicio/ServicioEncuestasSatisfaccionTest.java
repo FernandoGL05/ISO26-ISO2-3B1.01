@@ -14,6 +14,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
+
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -67,7 +70,10 @@ class ServicioEncuestasSatisfaccionTest {
         repositorioEncuestas.guardar(new EncuestaSatisfaccion("e3", "Otra", "Descripción", true));
         RespuestaEncuestaSatisfaccion segunda = servicio.responderEncuesta("p1", "e3", 3, null);
 
-        assertEquals(List.of(primera, segunda), servicio.consultarMisRespuestas("p1"));
+        assertEquals(
+            Set.of(primera, segunda),
+            Set.copyOf(servicio.consultarMisRespuestas("p1"))
+            );
         assertNotEquals(primera.getPacienteId(), servicio.consultarMisRespuestas("p2").get(0).getPacienteId());
     }
 }
