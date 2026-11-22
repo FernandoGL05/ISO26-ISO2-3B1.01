@@ -66,12 +66,19 @@
 - **Alternativas:** realizar pruebas manuales y fusionar directamente los cambios.
 - **Motivo:** detectar errores antes de integrar el código y facilitar su revisión.
 - **Consecuencias:** los casos de uso tienen pruebas automatizadas. Se corrigió un test no determinista en el CU06. Quedan pendientes las pruebas conjuntas después de integrar todas las ramas.
-
 ## D-009 · Consulta de disponibilidad de agendas médicas
 - **Fecha:** 22/11/2026
 - **Contexto:** el servicio debe permitir consultar la disponibilidad de las agendas diarias de trabajo de los médicos para organizar pruebas radiológicas e imagen médica.
 - **Decisión:** ofrecer al personal médico una consulta de disponibilidad por tipo de prueba, delimitada por un intervalo de un único día y con la duración de cada hueco indicada en la consulta. La identidad del médico se obtiene de la sesión autenticada. Las citas activas asociadas a ese médico ocupan huecos; las canceladas no.
 - **Alternativas:** consultar agendas de pacientes o recursos técnicos; guardar turnos y duraciones como configuración previa de cada agenda.
-- **Motivo:** habilitar una primera consulta útil respetando el modelo de citas existente y restringir la operación al personal médico.
-- **Consecuencias:** las citas deben estar asociadas a un médico para afectar a su disponibilidad. Las citas antiguas sin esa asociación no se atribuyen a ninguna agenda. La consulta genera huecos dentro del intervalo solicitado; queda pendiente persistir horarios de trabajo y duraciones específicas por tipo de prueba.
+- **Motivo:** habilitar una primera consulta respetando el modelo de citas existente y restringir la operación al personal médico.
+- **Consecuencias:** las citas deben estar asociadas a un médico para afectar a su disponibilidad. Las citas antiguas sin esa asociación no se atribuyen a ninguna agenda. Queda pendiente persistir horarios de trabajo y duraciones específicas por tipo de prueba.
+
+## D-010 · Informes de pruebas e imágenes adjuntas
+- **Fecha:** 22/11/2026
+- **Contexto:** el CDU11 requiere crear y consultar informes de pruebas diagnósticas e incorporar opcionalmente una imagen.
+- **Decisión:** vincular cada informe a una prueba realizada y guardar hallazgos, conclusión y fecha de creación asignada por el servidor. El médico autor puede crearlo y adjuntar una imagen; el paciente propietario y el médico autor pueden consultarlo.
+- **Alternativas:** permitir consulta a cualquier usuario médico o almacenar referencias externas a las imágenes.
+- **Motivo:** mantener el informe asociado al historial de la prueba y limitar la exposición de información clínica a las identidades relacionadas.
+- **Consecuencias:** en esta versión se admiten imágenes PNG o JPEG de hasta 5 MiB en memoria; los datos se pierden al reiniciar. Quedan pendientes la persistencia duradera, formatos de imagen médica como DICOM y la integración del autorizador con la autenticación real.
  
