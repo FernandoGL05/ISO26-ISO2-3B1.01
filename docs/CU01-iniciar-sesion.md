@@ -36,6 +36,12 @@ Se ha implementado `CU01` en **Java 21** sin dependencias externas de ejecución
 | `GET` | `/api/auth/session` | Cabecera `Authorization: Bearer <token>` | `200 OK` (sesión vigente), `401` (ausente/expirada/cerrada) |
 | `POST` | `/api/auth/logout` | Cabecera `Authorization: Bearer <token>` | `200 OK`, `401` (token inválido) |
 
+### Integración de la sesión con CU02 y CU08
+
+El servidor HTTP comparte la instancia de `ServicioAutenticacion` y el repositorio de sesiones con los endpoints de CU02 y CU08. Sus adaptadores extraen el token Bearer, validan la sesión y obtienen el rol y `usuarioId` desde ella; no aceptan esos datos de la petición. La asociación con `pacienteId` y `medicoId` es explícita y configurable, ya que son identificadores de dominio diferentes (`USR-001` → `paciente-1`; `USR-002` → `medico-1` en la configuración demostrativa). CU08 también comprueba la relación médico-paciente antes de crear una prescripción.
+
+La configuración demostrativa mantiene usuarios, asociaciones y datos en memoria. En un despliegue real, las asociaciones y la política clínica deben conectarse a sus repositorios y reglas persistentes.
+
 ### 2.2. Módulo `cliente` (`es.uclm.esi.iso2.B101.cliente`)
 
 | Capa | Clases | Responsabilidad |

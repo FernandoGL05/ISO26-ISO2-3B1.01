@@ -1,13 +1,24 @@
 package es.uclm.esi.iso2.B101.servidor.api;
 
 import es.uclm.esi.iso2.B101.servidor.integracion.ProveedorSSOSimulado;
+import es.uclm.esi.iso2.B101.servidor.persistencia.AsociacionIdentidadesClinicas;
+import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioCitasMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioAuditoriaAccesoMemoria;
+import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioPrescripcionesDiagnosticasMemoria;
+import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioSolicitudesCitaMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioSesionesMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioUsuariosMemoria;
+import es.uclm.esi.iso2.B101.servidor.seguridad.AutenticadorSesion;
 import es.uclm.esi.iso2.B101.servidor.seguridad.GeneradorTokens;
 import es.uclm.esi.iso2.B101.servidor.seguridad.GestorContrasenas;
+import es.uclm.esi.iso2.B101.servidor.servicio.PoliticaPrescripcionDiagnosticaPorVinculo;
+import es.uclm.esi.iso2.B101.servidor.servicio.ServicioCitas;
+import es.uclm.esi.iso2.B101.servidor.servicio.ServicioPrescripcionesDiagnosticas;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioAutenticacion;
 import java.io.IOException;
+import java.time.Clock;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Punto de entrada del servidor de Radiodiagnóstico del SESCAM.
@@ -18,19 +29,41 @@ public class AplicacionServidor {
 
     public static void main(String[] args) throws IOException {
         int puerto = args.length > 0 ? Integer.parseInt(args[0]) : PUERTO_POR_DEFECTO;
+        ServidorHTTP servidor = crearServidor(puerto);
+        servidor.iniciar();
+        System.out.println("Servidor de Radiodiagnóstico SESCAM escuchando en http://localhost:" + servidor.getPuerto());
+    }
 
+    public static ServidorHTTP crearServidor(int puerto) throws IOException {
         GestorContrasenas gestorContrasenas = new GestorContrasenas();
+        RepositorioSesionesMemoria repositorioSesiones = new RepositorioSesionesMemoria();
         ServicioAutenticacion servicioAutenticacion = new ServicioAutenticacion(
                 RepositorioUsuariosMemoria.conUsuariosPorDefecto(gestorContrasenas),
-                new RepositorioSesionesMemoria(),
+                repositorioSesiones,
                 new RepositorioAuditoriaAccesoMemoria(),
                 gestorContrasenas,
                 new GeneradorTokens(),
                 new ProveedorSSOSimulado()
         );
 
-        ServidorHTTP servidor = new ServidorHTTP(puerto, servicioAutenticacion);
-        servidor.iniciar();
-        System.out.println("Servidor de Radiodiagnóstico SESCAM escuchando en http://localhost:" + servidor.getPuerto());
+        AsociacionIdentidadesClinicas asociaciones = new AsociacionIdentidadesClinicas(
+                Map.of("USR-001", "paciente-1"),
+                Map.of("USR-002", "medico-1"));
+        AutenticadorSesion autenticadorSesion = new AutenticadorSesion(servicioAutenticacion);
+        ServicioCitas servicioCitas = new ServicioCitas(
+                new RepositorioCitasMemoria(), new RepositorioSolicitudesCitaMemoria());
+        ServicioPrescripcionesDiagnosticas servicioPrescripciones = new ServicioPrescripcionesDiagnosticas(
+                new RepositorioPrescripcionesDiagnosticasMemoria(),
+                Clock.systemDefaultZone(),
+                new PoliticaPrescripcionDiagnosticaPorVinculo(
+                        Map.of("medico-1", Set.of("paciente-1"))));
+
+        return new ServidorHTTP(
+                puerto,
+                servicioAutenticacion,
+                servicioCitas,
+                new AutorizadorCitasPorSesion(autenticadorSesion, asociaciones),
+                servicioPrescripciones,
+                new AutorizadorPrescripcionesPorSesion(autenticadorSesion, asociaciones));
     }
 }

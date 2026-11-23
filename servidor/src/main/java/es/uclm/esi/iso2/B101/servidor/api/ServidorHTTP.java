@@ -4,6 +4,8 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import es.uclm.esi.iso2.B101.servidor.dominio.ResultadoAutenticacion;
 import es.uclm.esi.iso2.B101.servidor.dominio.Sesion;
+import es.uclm.esi.iso2.B101.servidor.servicio.ServicioCitas;
+import es.uclm.esi.iso2.B101.servidor.servicio.ServicioPrescripcionesDiagnosticas;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioAutenticacion;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -28,6 +30,18 @@ public class ServidorHTTP {
         this.server = HttpServer.create(new InetSocketAddress(puerto), 0);
         this.server.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         registrarRutas();
+    }
+
+    public ServidorHTTP(
+            int puerto,
+            ServicioAutenticacion servicioAutenticacion,
+            ServicioCitas servicioCitas,
+            AutorizadorCitas autorizadorCitas,
+            ServicioPrescripcionesDiagnosticas servicioPrescripciones,
+            AutorizadorPrescripcionesDiagnosticas autorizadorPrescripciones) throws IOException {
+        this(puerto, servicioAutenticacion);
+        Cu02HttpHandler.registrarEn(server, servicioCitas, autorizadorCitas);
+        PrescripcionesPruebasHttpHandler.registrarEn(server, servicioPrescripciones, autorizadorPrescripciones);
     }
 
     private void registrarRutas() {
