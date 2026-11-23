@@ -20,7 +20,13 @@ final class JsonHistorialPruebas {
                     .append(",\"tipoPrueba\":").append(cadena(prueba.getTipoPrueba()))
                     .append(",\"fechaHoraRealizacion\":")
                     .append(cadena(prueba.getFechaHoraRealizacion().toString()))
-                    .append(",\"solicitudId\":");
+                    .append(",\"citaId\":");
+            if (prueba.getCitaId() == null) {
+                json.append("null");
+            } else {
+                json.append(cadena(prueba.getCitaId()));
+            }
+            json.append(",\"solicitudId\":");
             if (prueba.getSolicitudId() == null) {
                 json.append("null");
             } else {

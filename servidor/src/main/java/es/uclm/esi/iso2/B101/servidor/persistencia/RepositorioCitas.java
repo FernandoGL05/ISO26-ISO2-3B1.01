@@ -10,4 +10,6 @@ public interface RepositorioCitas {
     Optional<Cita> buscarPorId(String id);
 
     List<Cita> buscarPorPacienteId(String pacienteId);
+
+    List<Cita> buscarPorMedicoId(String medicoId);
 }
