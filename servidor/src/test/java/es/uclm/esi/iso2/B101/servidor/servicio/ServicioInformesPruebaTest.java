@@ -6,7 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import es.uclm.esi.iso2.B101.servidor.dominio.Cita;
 import es.uclm.esi.iso2.B101.servidor.dominio.InformePrueba;
+import es.uclm.esi.iso2.B101.servidor.dominio.PruebaRealizada;
+import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioCitasMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioHistorialPruebasMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioInformesPruebaMemoria;
 import java.time.Clock;
@@ -20,16 +23,27 @@ import org.junit.jupiter.api.Test;
 
 class ServicioInformesPruebaTest {
     private ServicioInformesPrueba servicio;
+    private RepositorioCitasMemoria repositorioCitas;
     private RepositorioHistorialPruebasMemoria repositorioPruebas;
     private RepositorioInformesPruebaMemoria repositorioInformes;
 
     @BeforeEach
     void prepararServicio() {
+        repositorioCitas = new RepositorioCitasMemoria();
+        Cita cita = new Cita(
+                "cita-1",
+                "paciente-1",
+                "medico-1",
+                "RM",
+                LocalDateTime.of(2026, 11, 20, 9, 0));
+        cita.marcarRealizada();
+        repositorioCitas.guardar(cita);
         repositorioPruebas = new RepositorioHistorialPruebasMemoria();
-        repositorioPruebas.registrar(new es.uclm.esi.iso2.B101.servidor.dominio.PruebaRealizada(
-                "prueba-1", "paciente-1", "RM", LocalDateTime.of(2026, 11, 20, 10, 0), null));
+        repositorioPruebas.registrar(new PruebaRealizada(
+                "prueba-1", "paciente-1", "RM", LocalDateTime.of(2026, 11, 20, 10, 0), null, "cita-1"));
         repositorioInformes = new RepositorioInformesPruebaMemoria();
         servicio = new ServicioInformesPrueba(
+                repositorioCitas,
                 repositorioPruebas,
                 repositorioInformes,
                 Clock.fixed(Instant.parse("2026-11-22T10:00:00Z"), ZoneOffset.UTC));
@@ -64,6 +78,70 @@ class ServicioInformesPruebaTest {
         assertThrows(NoSuchElementException.class,
                 () -> servicio.crear("medico-1", "inexistente", "Hallazgos", "Conclusión"));
         assertTrue(servicio.consultarPorPaciente("paciente-1").isEmpty());
+    }
+
+    @Test
+    void rechazaAlMedicoNoAsignadoSinGuardarInforme() {
+        assertThrows(InformePruebaNoPermitidoException.class,
+                () -> servicio.crear("medico-2", "prueba-1", "Hallazgos", "Conclusión"));
+
+        assertTrue(servicio.consultarPorPaciente("paciente-1").isEmpty());
+        assertTrue(servicio.consultarPorMedico("medico-2").isEmpty());
+    }
+
+    @Test
+    void rechazaPruebaSinCitaVinculadaSinGuardarInforme() {
+        repositorioPruebas.registrar(new PruebaRealizada(
+                "prueba-sin-cita",
+                "paciente-1",
+                "RM",
+                LocalDateTime.of(2026, 11, 20, 11, 0),
+                null));
+
+        assertThrows(InformePruebaNoPermitidoException.class,
+                () -> servicio.crear("medico-1", "prueba-sin-cita", "Hallazgos", "Conclusión"));
+
+        assertTrue(servicio.consultarPorPaciente("paciente-1").isEmpty());
+    }
+
+    @Test
+    void rechazaCitaNoRealizadaOIncoherenteSinGuardarInforme() {
+        repositorioCitas.guardar(new Cita(
+                "cita-pendiente",
+                "paciente-1",
+                "medico-1",
+                "RM",
+                LocalDateTime.of(2026, 11, 21, 9, 0)));
+        Cita citaPacienteUno = new Cita(
+                "cita-paciente-incoherente",
+                "paciente-1",
+                "medico-1",
+                "RM",
+                LocalDateTime.of(2026, 11, 20, 11, 0));
+        citaPacienteUno.marcarRealizada();
+        repositorioCitas.guardar(citaPacienteUno);
+        repositorioPruebas.registrar(new PruebaRealizada(
+                "prueba-pendiente",
+                "paciente-1",
+                "RM",
+                LocalDateTime.of(2026, 11, 21, 10, 0),
+                null,
+                "cita-pendiente"));
+        repositorioPruebas.registrar(new PruebaRealizada(
+                "prueba-paciente-incoherente",
+                "paciente-2",
+                "RM",
+                LocalDateTime.of(2026, 11, 20, 12, 0),
+                null,
+                "cita-paciente-incoherente"));
+
+        assertThrows(InformePruebaNoPermitidoException.class,
+                () -> servicio.crear("medico-1", "prueba-pendiente", "Hallazgos", "Conclusión"));
+        assertThrows(InformePruebaNoPermitidoException.class,
+                () -> servicio.crear("medico-1", "prueba-paciente-incoherente", "Hallazgos", "Conclusión"));
+
+        assertTrue(servicio.consultarPorPaciente("paciente-1").isEmpty());
+        assertTrue(servicio.consultarPorPaciente("paciente-2").isEmpty());
     }
 
     @Test

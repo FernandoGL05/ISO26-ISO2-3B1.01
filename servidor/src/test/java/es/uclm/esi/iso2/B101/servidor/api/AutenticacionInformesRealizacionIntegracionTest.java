@@ -117,6 +117,22 @@ class AutenticacionInformesRealizacionIntegracionTest {
                 "medico-2",
                 "TAC",
                 LocalDateTime.of(2026, 12, 1, 9, 0)));
+        Cita citaPruebaUno = new Cita(
+                "cita-prueba-1",
+                "paciente-1",
+                "medico-1",
+                "TAC",
+                LocalDateTime.of(2026, 11, 20, 9, 0));
+        citaPruebaUno.marcarRealizada();
+        repositorioCitas.guardar(citaPruebaUno);
+        Cita citaPruebaDos = new Cita(
+                "cita-prueba-2",
+                "paciente-2",
+                "medico-2",
+                "RM",
+                LocalDateTime.of(2026, 11, 21, 9, 0));
+        citaPruebaDos.marcarRealizada();
+        repositorioCitas.guardar(citaPruebaDos);
 
         RepositorioHistorialPruebasMemoria repositorioHistorial = new RepositorioHistorialPruebasMemoria();
         repositorioHistorial.registrar(new PruebaRealizada(
@@ -124,12 +140,20 @@ class AutenticacionInformesRealizacionIntegracionTest {
                 "paciente-1",
                 "TAC",
                 LocalDateTime.of(2026, 11, 20, 10, 0),
-                null));
+                null,
+                "cita-prueba-1"));
         repositorioHistorial.registrar(new PruebaRealizada(
                 "prueba-2",
                 "paciente-2",
                 "RM",
                 LocalDateTime.of(2026, 11, 21, 10, 0),
+                null,
+                "cita-prueba-2"));
+        repositorioHistorial.registrar(new PruebaRealizada(
+                "prueba-sin-cita",
+                "paciente-1",
+                "TAC",
+                LocalDateTime.of(2026, 11, 22, 10, 0),
                 null));
         RepositorioIncidenciasMemoria repositorioIncidencias = new RepositorioIncidenciasMemoria();
 
@@ -165,6 +189,7 @@ class AutenticacionInformesRealizacionIntegracionTest {
                                 pacientesPorMedico.getOrDefault(medicoId, Set.of()).contains(pacienteId));
         ServicioAgendas servicioAgendas = new ServicioAgendas(repositorioCitas);
         ServicioInformesPrueba servicioInformes = new ServicioInformesPrueba(
+                repositorioCitas,
                 repositorioHistorial,
                 new RepositorioInformesPruebaMemoria(),
                 Clock.fixed(AHORA, ZoneOffset.UTC));
@@ -257,6 +282,40 @@ class AutenticacionInformesRealizacionIntegracionTest {
     }
 
     @Test
+    void medicoNoAsignadoRecibe403YNoModificaInformesNiHistorial() throws Exception {
+        String medicoDos = iniciarSesion("medico2", "medico123");
+        String pacienteUno = iniciarSesion("paciente1", "paciente123");
+        String historialAntes = enviar("GET", "/api/historial-pruebas", pacienteUno, null).body();
+
+        HttpResponse<String> denegada = enviar(
+                "POST",
+                INFORMES,
+                medicoDos,
+                "{\"pruebaId\":\"prueba-1\",\"hallazgos\":\"No autorizado\",\"conclusion\":\"No autorizado\"}");
+
+        assertEquals(403, denegada.statusCode());
+        assertTrue(denegada.body().contains("\"codigoError\":\"PROHIBIDO\""));
+        assertEquals("[]", enviar("GET", INFORMES, pacienteUno, null).body());
+        assertEquals("[]", enviar("GET", INFORMES + "/medico", medicoDos, null).body());
+        assertEquals(historialAntes, enviar("GET", "/api/historial-pruebas", pacienteUno, null).body());
+    }
+
+    @Test
+    void deniegaInformeCuandoNoPuedeAcreditarseLaCitaDeLaPrueba() throws Exception {
+        String medicoUno = iniciarSesion("medico1", "medico123");
+        String pacienteUno = iniciarSesion("paciente1", "paciente123");
+
+        HttpResponse<String> denegada = enviar(
+                "POST",
+                INFORMES,
+                medicoUno,
+                "{\"pruebaId\":\"prueba-sin-cita\",\"hallazgos\":\"Hallazgos\",\"conclusion\":\"Conclusión\"}");
+
+        assertEquals(403, denegada.statusCode());
+        assertEquals("[]", enviar("GET", INFORMES, pacienteUno, null).body());
+    }
+
+    @Test
     void medicoRealizaSoloLasCitasQueTieneAsignadas() throws Exception {
         String medicoUno = iniciarSesion("medico1", "medico123");
 
@@ -284,6 +343,10 @@ class AutenticacionInformesRealizacionIntegracionTest {
             assertEquals(401, enviar("GET", ruta, "token-inexistente", null).statusCode());
             assertEquals(401, enviar("GET", ruta, expirado, null).statusCode());
         }
+        String cuerpoInforme =
+                "{\"pruebaId\":\"prueba-1\",\"hallazgos\":\"H\",\"conclusion\":\"C\"}";
+        assertEquals(401, enviar("POST", INFORMES, "token-inexistente", cuerpoInforme).statusCode());
+        assertEquals(401, enviar("POST", INFORMES, expirado, cuerpoInforme).statusCode());
         assertEquals(401, enviar("POST", REALIZACIONES, "token-inexistente", RESULTADO_REALIZADA).statusCode());
         assertEquals(401, enviar("POST", REALIZACIONES, expirado, RESULTADO_REALIZADA).statusCode());
 
@@ -292,6 +355,7 @@ class AutenticacionInformesRealizacionIntegracionTest {
         for (String ruta : rutasProtegidas()) {
             assertEquals(401, enviar("GET", ruta, cerrado, null).statusCode());
         }
+        assertEquals(401, enviar("POST", INFORMES, cerrado, cuerpoInforme).statusCode());
         assertEquals(401, enviar("POST", REALIZACIONES, cerrado, RESULTADO_REALIZADA).statusCode());
     }
 

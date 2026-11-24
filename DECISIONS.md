@@ -77,10 +77,10 @@
 ## D-010 · Informes de pruebas e imágenes adjuntas
 - **Fecha:** 22/11/2026
 - **Contexto:** el CDU11 requiere crear y consultar informes de pruebas diagnósticas e incorporar opcionalmente una imagen.
-- **Decisión:** vincular cada informe a una prueba realizada y guardar hallazgos, conclusión y fecha de creación asignada por el servidor. El médico autor puede crearlo y adjuntar una imagen; el paciente propietario y el médico autor pueden consultarlo.
+- **Decisión:** vincular cada informe a una prueba realizada y guardar hallazgos, conclusión y fecha de creación asignada por el servidor. Solo el médico asignado a la cita realizada vinculada a la prueba puede crear el informe y adjuntar una imagen; el paciente propietario y el médico autor pueden consultarlo. La autorización se rechaza si no puede verificarse la relación entre prueba, cita, médico y paciente.
 - **Alternativas:** permitir consulta a cualquier usuario médico o almacenar referencias externas a las imágenes.
 - **Motivo:** mantener el informe asociado al historial de la prueba y limitar la exposición de información clínica a las identidades relacionadas.
-- **Consecuencias:** en esta versión se admiten imágenes PNG o JPEG de hasta 5 MiB en memoria; los datos se pierden al reiniciar. Quedan pendientes la persistencia duradera, formatos de imagen médica como DICOM y la integración del autorizador con la autenticación real.
+- **Consecuencias:** en esta versión se admiten imágenes PNG o JPEG de hasta 5 MiB en memoria; los datos se pierden al reiniciar. Quedan pendientes la persistencia duradera y formatos de imagen médica como DICOM.
 
 ## D-011 · Registrar realización o incidencia de una prueba
 - **Fecha:** 22/11/2026

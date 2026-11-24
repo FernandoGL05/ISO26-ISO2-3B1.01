@@ -15,7 +15,7 @@ Las citas asociadas al médico bloquean intervalos de la duración indicada; las
 
 ## CDU11: informes de pruebas
 
-- `POST /api/informes-prueba`: un médico crea el informe de una prueba realizada, con `pruebaId`, `hallazgos` y `conclusion` en JSON. La fecha de creación la establece el servidor.
+- `POST /api/informes-prueba`: solo el médico autenticado asignado a la cita vinculada a la prueba realizada puede crear el informe, con `pruebaId`, `hallazgos` y `conclusion` en JSON. La cita debe constar como realizada y coincidir con el paciente y el tipo de prueba del historial. Si no puede acreditarse esa relación, se rechaza la operación. La fecha de creación la establece el servidor.
 - `GET /api/informes-prueba`: el paciente autenticado consulta sus informes.
 - `GET /api/informes-prueba/medico`: el médico autenticado consulta los informes que ha creado.
 - `GET /api/informes-prueba/{id}`: consulta el detalle si la identidad autenticada es el paciente propietario o el médico autor.

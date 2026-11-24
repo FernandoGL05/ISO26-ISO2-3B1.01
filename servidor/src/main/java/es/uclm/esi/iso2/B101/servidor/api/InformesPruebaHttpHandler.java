@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import es.uclm.esi.iso2.B101.servidor.dominio.InformePrueba;
+import es.uclm.esi.iso2.B101.servidor.servicio.InformePruebaNoPermitidoException;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioInformesPrueba;
 import java.io.IOException;
 import java.net.URLDecoder;
@@ -43,6 +44,8 @@ public final class InformesPruebaHttpHandler implements HttpHandler {
             procesar(intercambio);
         } catch (ErrorHttp error) {
             responderError(intercambio, error.estado, error.codigo, error.getMessage());
+        } catch (InformePruebaNoPermitidoException error) {
+            responderError(intercambio, 403, "PROHIBIDO", "No está autorizado para crear un informe de esta prueba");
         } catch (IllegalArgumentException error) {
             responderError(intercambio, 400, "SOLICITUD_INVALIDA", "La solicitud contiene datos inválidos");
         } catch (java.util.NoSuchElementException error) {

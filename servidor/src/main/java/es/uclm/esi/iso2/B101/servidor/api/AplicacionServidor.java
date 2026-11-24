@@ -99,6 +99,7 @@ public class AplicacionServidor {
                                 pacientesPorMedico.getOrDefault(medicoId, Set.of()).contains(pacienteId));
         ServicioAgendas servicioAgendas = new ServicioAgendas(repositorioCitas);
         ServicioInformesPrueba servicioInformesPrueba = new ServicioInformesPrueba(
+                repositorioCitas,
                 repositorioHistorialPruebas,
                 new RepositorioInformesPruebaMemoria());
         ServicioRealizacionPruebas servicioRealizacionPruebas = new ServicioRealizacionPruebas(
