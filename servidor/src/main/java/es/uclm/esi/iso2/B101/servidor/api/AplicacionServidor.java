@@ -36,6 +36,7 @@ import es.uclm.esi.iso2.B101.servidor.servicio.ServicioAutenticacion;
 import java.io.IOException;
 import java.time.Clock;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -53,6 +54,13 @@ public class AplicacionServidor {
     }
 
     public static ServidorHTTP crearServidor(int puerto) throws IOException {
+        return crearServidor(puerto, Clock.systemUTC(), new RepositorioCitasMemoria());
+    }
+
+    public static ServidorHTTP crearServidor(
+            int puerto, Clock relojAutenticacion, RepositorioCitasMemoria repositorioCitas) throws IOException {
+        Objects.requireNonNull(relojAutenticacion, "relojAutenticacion no puede ser nulo");
+        Objects.requireNonNull(repositorioCitas, "repositorioCitas no puede ser nulo");
         GestorContrasenas gestorContrasenas = new GestorContrasenas();
         RepositorioSesionesMemoria repositorioSesiones = new RepositorioSesionesMemoria();
         ServicioAutenticacion servicioAutenticacion = new ServicioAutenticacion(
@@ -61,14 +69,17 @@ public class AplicacionServidor {
                 new RepositorioAuditoriaAccesoMemoria(),
                 gestorContrasenas,
                 new GeneradorTokens(),
-                new ProveedorSSOSimulado()
+                new ProveedorSSOSimulado(),
+                relojAutenticacion,
+                ServicioAutenticacion.MAX_INTENTOS_FALLIDOS_POR_DEFECTO,
+                ServicioAutenticacion.DURACION_BLOQUEO_POR_DEFECTO,
+                ServicioAutenticacion.DURACION_SESION_POR_DEFECTO
         );
 
         AsociacionIdentidadesClinicas asociaciones = new AsociacionIdentidadesClinicas(
                 Map.of("USR-001", "paciente-1"),
                 Map.of("USR-002", "medico-1"));
         AutenticadorSesion autenticadorSesion = new AutenticadorSesion(servicioAutenticacion);
-        RepositorioCitasMemoria repositorioCitas = new RepositorioCitasMemoria();
         ServicioCitas servicioCitas =
                 new ServicioCitas(repositorioCitas, new RepositorioSolicitudesCitaMemoria());
         ServicioPrescripcionesDiagnosticas servicioPrescripciones = new ServicioPrescripcionesDiagnosticas(
