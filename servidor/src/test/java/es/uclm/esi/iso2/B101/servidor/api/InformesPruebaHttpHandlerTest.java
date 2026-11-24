@@ -5,7 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.sun.net.httpserver.HttpServer;
+import es.uclm.esi.iso2.B101.servidor.dominio.Cita;
 import es.uclm.esi.iso2.B101.servidor.dominio.PruebaRealizada;
+import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioCitasMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioHistorialPruebasMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioInformesPruebaMemoria;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioInformesPrueba;
@@ -35,11 +37,20 @@ class InformesPruebaHttpHandlerTest {
 
     @BeforeEach
     void iniciarServidorTemporal() throws IOException {
+        RepositorioCitasMemoria citas = new RepositorioCitasMemoria();
+        Cita cita = new Cita(
+                "cita-1",
+                "paciente-1",
+                "medico-1",
+                "RM",
+                LocalDateTime.of(2026, 11, 20, 9, 0));
+        cita.marcarRealizada();
+        citas.guardar(cita);
         RepositorioHistorialPruebasMemoria pruebas = new RepositorioHistorialPruebasMemoria();
         pruebas.registrar(new PruebaRealizada(
-                "prueba-1", "paciente-1", "RM", LocalDateTime.of(2026, 11, 20, 10, 0), null));
+                "prueba-1", "paciente-1", "RM", LocalDateTime.of(2026, 11, 20, 10, 0), null, "cita-1"));
         ServicioInformesPrueba servicio =
-                new ServicioInformesPrueba(pruebas, new RepositorioInformesPruebaMemoria());
+                new ServicioInformesPrueba(citas, pruebas, new RepositorioInformesPruebaMemoria());
         AutorizadorInformesPrueba autorizador = cabecera -> switch (cabecera) {
             case "Bearer " + TOKEN_MEDICO -> Optional.of(
                     new AutorizadorInformesPrueba.Identidad(false, null, true, "medico-1"));

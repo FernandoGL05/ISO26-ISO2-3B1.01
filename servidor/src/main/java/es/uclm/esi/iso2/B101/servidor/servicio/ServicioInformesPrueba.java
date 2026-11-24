@@ -1,7 +1,10 @@
 package es.uclm.esi.iso2.B101.servidor.servicio;
 
+import es.uclm.esi.iso2.B101.servidor.dominio.Cita;
+import es.uclm.esi.iso2.B101.servidor.dominio.EstadoCita;
 import es.uclm.esi.iso2.B101.servidor.dominio.InformePrueba;
 import es.uclm.esi.iso2.B101.servidor.dominio.PruebaRealizada;
+import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioCitas;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioHistorialPruebas;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioInformesPrueba;
 import java.time.Clock;
@@ -14,20 +17,24 @@ import java.util.UUID;
 
 public final class ServicioInformesPrueba {
     public static final int TAMANO_MAXIMO_IMAGEN_BYTES = 5 * 1024 * 1024;
+    private final RepositorioCitas repositorioCitas;
     private final RepositorioHistorialPruebas repositorioPruebas;
     private final RepositorioInformesPrueba repositorioInformes;
     private final Clock reloj;
 
     public ServicioInformesPrueba(
+            RepositorioCitas repositorioCitas,
             RepositorioHistorialPruebas repositorioPruebas,
             RepositorioInformesPrueba repositorioInformes) {
-        this(repositorioPruebas, repositorioInformes, Clock.systemDefaultZone());
+        this(repositorioCitas, repositorioPruebas, repositorioInformes, Clock.systemDefaultZone());
     }
 
     public ServicioInformesPrueba(
+            RepositorioCitas repositorioCitas,
             RepositorioHistorialPruebas repositorioPruebas,
             RepositorioInformesPrueba repositorioInformes,
             Clock reloj) {
+        this.repositorioCitas = Objects.requireNonNull(repositorioCitas, "repositorioCitas no puede ser nulo");
         this.repositorioPruebas = Objects.requireNonNull(repositorioPruebas, "repositorioPruebas no puede ser nulo");
         this.repositorioInformes = Objects.requireNonNull(repositorioInformes, "repositorioInformes no puede ser nulo");
         this.reloj = Objects.requireNonNull(reloj, "reloj no puede ser nulo");
@@ -40,6 +47,7 @@ public final class ServicioInformesPrueba {
         validarObligatorio(conclusion, "conclusion");
         PruebaRealizada prueba = repositorioPruebas.buscarPorId(pruebaId)
                 .orElseThrow(() -> new NoSuchElementException("Prueba realizada no encontrada"));
+        validarAutorizacionCreacion(medicoId, prueba);
         InformePrueba informe = new InformePrueba(
                 UUID.randomUUID().toString(),
                 prueba.getId(),
@@ -52,6 +60,21 @@ public final class ServicioInformesPrueba {
                 null);
         repositorioInformes.guardar(informe);
         return informe;
+    }
+
+    private void validarAutorizacionCreacion(String medicoId, PruebaRealizada prueba) {
+        String citaId = prueba.getCitaId();
+        if (citaId == null) {
+            throw new InformePruebaNoPermitidoException();
+        }
+        Cita cita = repositorioCitas.buscarPorId(citaId)
+                .orElseThrow(InformePruebaNoPermitidoException::new);
+        if (cita.getEstado() != EstadoCita.REALIZADA
+                || !medicoId.equals(cita.getMedicoId())
+                || !cita.getPacienteId().equals(prueba.getPacienteId())
+                || !cita.getTipoPrueba().equals(prueba.getTipoPrueba())) {
+            throw new InformePruebaNoPermitidoException();
+        }
     }
 
     public List<InformePrueba> consultarPorPaciente(String pacienteId) {
