@@ -89,4 +89,27 @@
 - **Alternativas:** permitir registrar resultados a cualquier médico; guardar las incidencias en un módulo separado del CU05.
 - **Motivo:** vincular el registro clínico a la cita y reutilizar el seguimiento de incidencias ya disponible, evitando duplicar su gestión.
 - **Consecuencias:** las citas canceladas o asignadas a otro médico no admiten registro de resultado. No se puede registrar dos veces una realización para la misma cita. Los datos se almacenan en memoria y la sesión médica se valida mediante el autorizador inyectado.
+
+## D-012 · Configuración administrativa: tipos de prueba (CU20), protocolos (CU21) y horarios (CU22)
+- **Fecha:** 24/11/2026
+- **Contexto:** el actor Administrador del sistema necesita configurar el catálogo de tipos de prueba y sus atributos (`RF20`/`CU20`), los protocolos clínicos/técnicos (`RF21`/`CU21`) y los horarios operativos de salas, equipos y médicos (`RF22`/`CU22`), integrando estos datos con el modelo existente (`PrioridadPrueba`, `ServicioAgendas`) y siguiendo versionado SemVer 2.0.0.
+- **Decisión:**
+  - Implementar `TipoPrueba` (CU20, reutilizando `PrioridadPrueba` y validando consentimiento informado obligatorio si requiere contraste), `Protocolo` (CU21, validando existencia del `tipoPruebaId` de CU20 y con versionado incremental al actualizar) y `HorarioOperativo` junto con `TipoRecursoHorario` (`SALA`, `EQUIPO`, `MEDICO`, CU22, impidiendo solapamientos en horarios activos del mismo recurso y día).
+  - Organizar el código en las capas `dominio`, `persistencia` (repositorios en memoria *thread-safe*), `servicio`, `api` (handlers HTTP/REST protegidos con `AutorizadorAdministrador`) y clientes HTTP en `cliente` (`cu20`, `cu21`, `cu22`).
+  - Integrar CU20 y CU22 en `ServicioAgendas` añadiendo el constructor sobrecargado y `consultarDisponibilidadConfigurada` sin romper la compatibilidad hacia atrás.
+  - Aplicar incremento **MINOR** según **SemVer 2.0.0** al tratarse de nueva funcionalidad compatible hacia atrás: `radiodiagnostico` pasa de `0.1.0-SNAPSHOT` a `0.2.0-SNAPSHOT`, y `servidor` y `cliente` pasan de `1.0.0-SNAPSHOT` a `1.1.0-SNAPSHOT`.
+- **Alternativas:** crear módulos Maven separados o duplicar el cálculo de huecos fuera de `ServicioAgendas`.
+- **Motivo:** respetar la arquitectura multimódulo (`D-002`) y la organización de paquetes (`D-004`), mantener compatibilidad con los CU02–CU12 existentes y reutilizar `ServicioAgendas` y `PrioridadPrueba`.
+- **Consecuencias:** la administración del catálogo, protocolos y horarios queda cubierta de extremo a extremo (dominio, servicio, REST y cliente HTTP) con pruebas JUnit y cobertura JaCoCo verificada; la persistencia definitiva y la conexión con el autorizador de sesiones real quedan preparadas tras las interfaces de repositorio y `AutorizadorAdministrador`.
+- **Prompt utilizado:**
+  > Actua como ingeniero de software espeficifaco en software administrativo.
+  > ---
+  > 1. Analiza el estado actual del repositorio "https://github.com/FernandoGL05/ISO26-ISO2-3B1.01"  
+  > 2. Implementa los casos de uso 20, 21 y 22 que estan en su respectivo apartado de la wiki (te proporciono imagen por si acaso)con cuidado de que quede todo bien integrado con lo que ya hay actualmente implementado en el proyecto.
+  > 3. Genera los Test pertinentes para Maven y JUnit
+  > 4. Actualiza el Desicions.md con este prompt 
+  >    ---
+  > # Finalmente
+  > Cuando termines, documenta todo lo que has hecho siguiendo las correctas normas y sube el código al repositorio con pull request teniendo en cuenta la normativa de branches y de versionado con la normativa SemVer 2.0.0
+
  

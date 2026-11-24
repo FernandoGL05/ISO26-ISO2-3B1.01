@@ -4,8 +4,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import es.uclm.esi.iso2.B101.servidor.dominio.Cita;
+import es.uclm.esi.iso2.B101.servidor.dominio.PrioridadPrueba;
+import es.uclm.esi.iso2.B101.servidor.dominio.TipoPrueba;
+import es.uclm.esi.iso2.B101.servidor.dominio.TipoRecursoHorario;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioCitasMemoria;
+import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioHorariosMemoria;
+import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioTiposPruebaMemoria;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,5 +68,44 @@ class ServicioAgendasTest {
                         "medico-1", "RM", DESDE, HASTA.plusDays(1), 30));
         assertThrows(IllegalArgumentException.class,
                 () -> servicio.consultarDisponibilidad("medico-1", "RM", DESDE, HASTA, 0));
+    }
+
+    @Test
+    void integraTiposPruebaYHorariosConfiguradosAlConsultarDisponibilidad() {
+        RepositorioHorariosMemoria repoHorarios = new RepositorioHorariosMemoria();
+        RepositorioTiposPruebaMemoria repoTipos = new RepositorioTiposPruebaMemoria();
+        ServicioHorarios servicioHorarios = new ServicioHorarios(repoHorarios);
+        ServicioTiposPrueba servicioTipos = new ServicioTiposPrueba(repoTipos);
+
+        TipoPrueba rm = servicioTipos.crearTipoPrueba(
+                "RM Cerebral", "RM", "RM 3T", "Sala RM-1",
+                30, "Sin metales", false, false,
+                "Sin marcapasos", PrioridadPrueba.ORDINARIA, true);
+
+        // 2026-12-01 es martes (TUESDAY)
+        servicioHorarios.crearHorario(
+                "medico-1", TipoRecursoHorario.MEDICO, DayOfWeek.TUESDAY,
+                LocalTime.of(9, 0), LocalTime.of(10, 30), 30);
+        repositorio.guardar(new Cita(
+                "cita-1", "paciente-1", "medico-1", "RM Cerebral",
+                LocalDateTime.of(2026, 12, 1, 9, 30)));
+
+        ServicioAgendas agendasIntegradas = new ServicioAgendas(repositorio, repoHorarios, repoTipos);
+        List<ServicioAgendas.HuecoDisponible> huecos = agendasIntegradas.consultarDisponibilidadConfigurada(
+                "medico-1", rm.getId(), LocalDate.of(2026, 12, 1));
+
+        assertEquals(
+                List.of(
+                        new ServicioAgendas.HuecoDisponible(
+                                "RM Cerebral", LocalDateTime.of(2026, 12, 1, 9, 0),
+                                LocalDateTime.of(2026, 12, 1, 9, 30)),
+                        new ServicioAgendas.HuecoDisponible(
+                                "RM Cerebral", LocalDateTime.of(2026, 12, 1, 10, 0),
+                                LocalDateTime.of(2026, 12, 1, 10, 30))),
+                huecos);
+
+        assertThrows(IllegalStateException.class,
+                () -> servicio.consultarDisponibilidadConfigurada(
+                        "medico-1", rm.getId(), LocalDate.of(2026, 12, 1)));
     }
 }

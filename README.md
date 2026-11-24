@@ -45,3 +45,11 @@ Si la prueba no pudo completarse, se puede registrar una incidencia asociada a l
 ```
 
 La incidencia queda en el CU05 del paciente. En esta versión el registro se almacena en los repositorios en memoria existentes.
+
+## CU20, CU21 y CU22: configuración administrativa
+
+Todos los endpoints administrativos requieren `Authorization: Bearer <token>` con rol `ADMINISTRADOR` (validado mediante `AutorizadorAdministrador`):
+
+- **CU20 — Tipos de prueba (`/api/tipos-prueba`)**: `POST /api/tipos-prueba`, `GET /api/tipos-prueba?soloActivos=true|false`, `GET /api/tipos-prueba/{id}`, `PUT /api/tipos-prueba/{id}` y `POST /api/tipos-prueba/{id}/estado`. Exige consentimiento informado si la prueba requiere contraste y reutiliza `PrioridadPrueba`.
+- **CU21 — Protocolos (`/api/protocolos`)**: `POST /api/protocolos`, `GET /api/protocolos?tipoPruebaId=...`, `GET /api/protocolos/{id}`, `PUT /api/protocolos/{id}` (incrementa `version`) y `POST /api/protocolos/{id}/estado`. Valida la existencia del `tipoPruebaId` asociado en CU20.
+- **CU22 — Horarios operativos (`/api/horarios`)**: `POST /api/horarios`, `GET /api/horarios?recursoId=...&diaSemana=...`, `GET /api/horarios/{id}`, `PUT /api/horarios/{id}` y `POST /api/horarios/{id}/estado`. Gestiona horarios por `SALA`, `EQUIPO` o `MEDICO` evitando solapamientos activos e integrándose con `ServicioAgendas.consultarDisponibilidadConfigurada`.
