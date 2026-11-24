@@ -5,10 +5,12 @@ import com.sun.net.httpserver.HttpServer;
 import es.uclm.esi.iso2.B101.servidor.dominio.ResultadoAutenticacion;
 import es.uclm.esi.iso2.B101.servidor.dominio.Sesion;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioCitas;
+import es.uclm.esi.iso2.B101.servidor.servicio.ServicioEncuestasSatisfaccion;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioHistorialPruebas;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioIncidencias;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioNotificaciones;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioPrescripcionesDiagnosticas;
+import es.uclm.esi.iso2.B101.servidor.servicio.ServicioSeguimientos;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioAutenticacion;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -70,6 +72,40 @@ public class ServidorHTTP {
         NotificacionesHttpHandler.registrarEn(server, servicioNotificaciones, autorizadorNotificaciones);
         HistorialPruebasHttpHandler.registrarEn(server, servicioHistorialPruebas, autorizadorHistorialPruebas);
         IncidenciasHttpHandler.registrarEn(server, servicioIncidencias, autorizadorIncidencias);
+    }
+
+    public ServidorHTTP(
+            int puerto,
+            ServicioAutenticacion servicioAutenticacion,
+            ServicioCitas servicioCitas,
+            AutorizadorCitas autorizadorCitas,
+            ServicioPrescripcionesDiagnosticas servicioPrescripciones,
+            AutorizadorPrescripcionesDiagnosticas autorizadorPrescripciones,
+            ServicioNotificaciones servicioNotificaciones,
+            AutorizadorNotificaciones autorizadorNotificaciones,
+            ServicioHistorialPruebas servicioHistorialPruebas,
+            AutorizadorHistorialPruebas autorizadorHistorialPruebas,
+            ServicioIncidencias servicioIncidencias,
+            AutorizadorIncidencias autorizadorIncidencias,
+            ServicioEncuestasSatisfaccion servicioEncuestas,
+            AutorizadorEncuestas autorizadorEncuestas,
+            ServicioSeguimientos servicioSeguimientos,
+            AutorizadorSeguimientos autorizadorSeguimientos) throws IOException {
+        this(
+                puerto,
+                servicioAutenticacion,
+                servicioCitas,
+                autorizadorCitas,
+                servicioPrescripciones,
+                autorizadorPrescripciones,
+                servicioNotificaciones,
+                autorizadorNotificaciones,
+                servicioHistorialPruebas,
+                autorizadorHistorialPruebas,
+                servicioIncidencias,
+                autorizadorIncidencias);
+        EncuestasSatisfaccionHttpHandler.registrarEn(server, servicioEncuestas, autorizadorEncuestas);
+        SeguimientosHttpHandler.registrarEn(server, servicioSeguimientos, autorizadorSeguimientos);
     }
 
     private void registrarRutas() {
