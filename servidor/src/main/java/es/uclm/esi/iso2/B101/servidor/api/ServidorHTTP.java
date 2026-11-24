@@ -5,6 +5,9 @@ import com.sun.net.httpserver.HttpServer;
 import es.uclm.esi.iso2.B101.servidor.dominio.ResultadoAutenticacion;
 import es.uclm.esi.iso2.B101.servidor.dominio.Sesion;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioCitas;
+import es.uclm.esi.iso2.B101.servidor.servicio.ServicioHistorialPruebas;
+import es.uclm.esi.iso2.B101.servidor.servicio.ServicioIncidencias;
+import es.uclm.esi.iso2.B101.servidor.servicio.ServicioNotificaciones;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioPrescripcionesDiagnosticas;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioAutenticacion;
 import java.io.IOException;
@@ -42,6 +45,31 @@ public class ServidorHTTP {
         this(puerto, servicioAutenticacion);
         Cu02HttpHandler.registrarEn(server, servicioCitas, autorizadorCitas);
         PrescripcionesPruebasHttpHandler.registrarEn(server, servicioPrescripciones, autorizadorPrescripciones);
+    }
+
+    public ServidorHTTP(
+            int puerto,
+            ServicioAutenticacion servicioAutenticacion,
+            ServicioCitas servicioCitas,
+            AutorizadorCitas autorizadorCitas,
+            ServicioPrescripcionesDiagnosticas servicioPrescripciones,
+            AutorizadorPrescripcionesDiagnosticas autorizadorPrescripciones,
+            ServicioNotificaciones servicioNotificaciones,
+            AutorizadorNotificaciones autorizadorNotificaciones,
+            ServicioHistorialPruebas servicioHistorialPruebas,
+            AutorizadorHistorialPruebas autorizadorHistorialPruebas,
+            ServicioIncidencias servicioIncidencias,
+            AutorizadorIncidencias autorizadorIncidencias) throws IOException {
+        this(
+                puerto,
+                servicioAutenticacion,
+                servicioCitas,
+                autorizadorCitas,
+                servicioPrescripciones,
+                autorizadorPrescripciones);
+        NotificacionesHttpHandler.registrarEn(server, servicioNotificaciones, autorizadorNotificaciones);
+        HistorialPruebasHttpHandler.registrarEn(server, servicioHistorialPruebas, autorizadorHistorialPruebas);
+        IncidenciasHttpHandler.registrarEn(server, servicioIncidencias, autorizadorIncidencias);
     }
 
     private void registrarRutas() {

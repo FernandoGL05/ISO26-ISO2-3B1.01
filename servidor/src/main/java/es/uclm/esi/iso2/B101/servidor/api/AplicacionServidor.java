@@ -4,6 +4,9 @@ import es.uclm.esi.iso2.B101.servidor.integracion.ProveedorSSOSimulado;
 import es.uclm.esi.iso2.B101.servidor.persistencia.AsociacionIdentidadesClinicas;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioCitasMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioAuditoriaAccesoMemoria;
+import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioHistorialPruebasMemoria;
+import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioIncidenciasMemoria;
+import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioNotificacionesMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioPrescripcionesDiagnosticasMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioSolicitudesCitaMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioSesionesMemoria;
@@ -13,6 +16,9 @@ import es.uclm.esi.iso2.B101.servidor.seguridad.GeneradorTokens;
 import es.uclm.esi.iso2.B101.servidor.seguridad.GestorContrasenas;
 import es.uclm.esi.iso2.B101.servidor.servicio.PoliticaPrescripcionDiagnosticaPorVinculo;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioCitas;
+import es.uclm.esi.iso2.B101.servidor.servicio.ServicioHistorialPruebas;
+import es.uclm.esi.iso2.B101.servidor.servicio.ServicioIncidencias;
+import es.uclm.esi.iso2.B101.servidor.servicio.ServicioNotificaciones;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioPrescripcionesDiagnosticas;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioAutenticacion;
 import java.io.IOException;
@@ -57,6 +63,12 @@ public class AplicacionServidor {
                 Clock.systemDefaultZone(),
                 new PoliticaPrescripcionDiagnosticaPorVinculo(
                         Map.of("medico-1", Set.of("paciente-1"))));
+        ServicioNotificaciones servicioNotificaciones =
+                new ServicioNotificaciones(new RepositorioNotificacionesMemoria());
+        ServicioHistorialPruebas servicioHistorialPruebas =
+                new ServicioHistorialPruebas(new RepositorioHistorialPruebasMemoria());
+        ServicioIncidencias servicioIncidencias =
+                new ServicioIncidencias(new RepositorioIncidenciasMemoria());
 
         return new ServidorHTTP(
                 puerto,
@@ -64,6 +76,12 @@ public class AplicacionServidor {
                 servicioCitas,
                 new AutorizadorCitasPorSesion(autenticadorSesion, asociaciones),
                 servicioPrescripciones,
-                new AutorizadorPrescripcionesPorSesion(autenticadorSesion, asociaciones));
+                new AutorizadorPrescripcionesPorSesion(autenticadorSesion, asociaciones),
+                servicioNotificaciones,
+                new AutorizadorNotificacionesPorSesion(autenticadorSesion, asociaciones),
+                servicioHistorialPruebas,
+                new AutorizadorHistorialPruebasPorSesion(autenticadorSesion, asociaciones),
+                servicioIncidencias,
+                new AutorizadorIncidenciasPorSesion(autenticadorSesion, asociaciones));
     }
 }
