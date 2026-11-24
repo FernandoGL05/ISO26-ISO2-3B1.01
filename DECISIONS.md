@@ -1,5 +1,5 @@
 # Registro de decisiones
- 
+
 ## D-001 · Agente para implementar
 - **Fecha:** 13/10 · It. 0 · Acta: 13/10
 - ...
@@ -25,7 +25,8 @@
   - CU09: prescripción de seguimientos periódicos
 - **Alternativas:** implementar todas las funcionalidades conjuntamente.
 - **Motivo:** facilitar el trabajo en equipo, las pruebas y la revisión del código.
-- **Consecuencias:** cada caso de uso dispone de sus propias clases y pruebas. Los CU02-CU05 están integrados en `develop`. Los CU06-CU09 tienen pull requests abiertas.
+- **Consecuencias en el momento de la decisión:** cada caso de uso dispone de sus propias clases y pruebas. En aquel estado, CU02-CU05 estaban integrados en `develop` y CU06-CU09 tenían pull requests abiertas.
+- **Actualización de estado:** en la rama de integración descrita por esta documentación, CU01 está integrado con CU02–CU12. Las pull requests mencionadas arriba son un dato histórico, no el estado actual de integración.
 
 ## D-004 · Organización de paquetes
 - **Fecha:** 22/11/2026
@@ -49,7 +50,8 @@
 - **Decisión:** utilizar interfaces de autorización inyectables y comprobar los roles y la identidad de cada usuario.
 - **Alternativas:** implementar autenticación independiente en cada caso de uso.
 - **Motivo:** evitar duplicar funcionalidades y facilitar la integración con el CU01.
-- **Consecuencias:** se pueden probar los permisos de acceso, pero queda pendiente conectar los módulos con la autenticación real.
+- **Consecuencias en el momento de la decisión:** se podían probar los permisos de acceso, pero quedaba pendiente conectar los módulos con la autenticación real.
+- **Actualización de estado:** los handlers CU02–CU12 comparten el servicio y el repositorio de sesiones de CU01. La autorización obtiene el rol y el usuario de la sesión y aplica las asociaciones clínicas y permisos de cada operación.
 
 ## D-007 · Separación de prescripciones y citas
 - **Fecha:** 22/11/2026
@@ -57,7 +59,7 @@
 - **Decisión:** separar las prescripciones diagnósticas del CU08 y los seguimientos periódicos del CU09 de la gestión de citas.
 - **Alternativas:** utilizar una única entidad para prescripciones, pruebas y citas.
 - **Motivo:** evitar mezclar responsabilidades médicas y administrativas.
-- **Consecuencias:** el CU09 genera necesidades de nuevas citas sin asignar directamente una fecha, sala o profesional. Queda pendiente integrar estos procesos con los módulos de seguimiento y citas.
+- **Consecuencias:** el CU09 genera necesidades de nuevas citas sin asignar directamente una fecha, sala o profesional. La integración disponible no crea automáticamente citas ni registros CU07; la asignación y programación posterior siguen fuera del alcance implementado.
 
 ## D-008 · Pruebas y control de versiones
 - **Fecha:** 22/11/2026
@@ -65,7 +67,9 @@
 - **Decisión:** utilizar Java 21, Maven y JUnit para verificar el código con `mvn clean verify`. Trabajar en ramas `feature` y utilizar pull requests y GitHub Actions.
 - **Alternativas:** realizar pruebas manuales y fusionar directamente los cambios.
 - **Motivo:** detectar errores antes de integrar el código y facilitar su revisión.
-- **Consecuencias:** los casos de uso tienen pruebas automatizadas. Se corrigió un test no determinista en el CU06. Quedan pendientes las pruebas conjuntas después de integrar todas las ramas.
+- **Consecuencias en el momento de la decisión:** los casos de uso tenían pruebas automatizadas, se corrigió un test no determinista en CU06 y quedaban pendientes las pruebas conjuntas después de integrar las ramas.
+- **Actualización de estado:** el estado documentado registra 298 pruebas superadas (249 de servidor y 49 de cliente), verificaciones JaCoCo correctas y pruebas de integración HTTP/E2E de los flujos principales. No se afirma cobertura exhaustiva ni se publica aquí un porcentaje.
+
 ## D-009 · Consulta de disponibilidad de agendas médicas
 - **Fecha:** 22/11/2026
 - **Contexto:** el servicio debe permitir consultar la disponibilidad de las agendas diarias de trabajo de los médicos para organizar pruebas radiológicas e imagen médica.
@@ -89,4 +93,11 @@
 - **Alternativas:** permitir registrar resultados a cualquier médico; guardar las incidencias en un módulo separado del CU05.
 - **Motivo:** vincular el registro clínico a la cita y reutilizar el seguimiento de incidencias ya disponible, evitando duplicar su gestión.
 - **Consecuencias:** las citas canceladas o asignadas a otro médico no admiten registro de resultado. No se puede registrar dos veces una realización para la misma cita. Los datos se almacenan en memoria y la sesión médica se valida mediante el autorizador inyectado.
- 
+
+## D-012 · Integración del servidor y demostración local
+- **Fecha:** 24/11/2026
+- **Contexto:** presentar conjuntamente CU01–CU12 y permitir comprobar sus flujos con datos controlados, sin cambiar el comportamiento de las pruebas automatizadas ni incorporar servicios externos.
+- **Decisión:** conservar una única fábrica y cableado de servicios/repositorios; ofrecer la carga de fixtures ficticias como opción explícita `--demo`. La fábrica habitual no carga esas fixtures. El servidor de demostración enlaza a `127.0.0.1`; el SSO simulado solo se habilita en modo demo. Los cuerpos de login y SSO están limitados a 16 KiB y responden `413` si superan el límite.
+- **Alternativas:** duplicar la configuración para demo, precargar fixtures en toda ejecución o habilitar el proveedor SSO simulado en el modo normal.
+- **Motivo:** hacer reproducibles los flujos de presentación y conservar el aislamiento de las pruebas con datos propios, reduciendo la exposición accidental del servidor.
+- **Consecuencias y límites:** la sesión se comparte entre casos de uso y los repositorios relacionados enlazan citas, historial e incidencias. Los datos siguen siendo volátiles, las identidades y cuentas son ficticias, el transporte no usa TLS y la configuración es académica, no clínica. La cobertura de las operaciones no es exhaustiva.
