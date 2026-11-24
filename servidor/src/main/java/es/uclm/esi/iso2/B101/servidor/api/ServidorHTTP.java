@@ -18,6 +18,7 @@ import es.uclm.esi.iso2.B101.servidor.servicio.ServicioRealizacionPruebas;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioAutenticacion;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
@@ -31,12 +32,15 @@ import java.util.concurrent.Executors;
  */
 public class ServidorHTTP {
 
+    public static final int MAX_CUERPO_AUTENTICACION_BYTES = 16 * 1024;
+
     private final HttpServer server;
     private final ServicioAutenticacion servicioAutenticacion;
 
     public ServidorHTTP(int puerto, ServicioAutenticacion servicioAutenticacion) throws IOException {
         this.servicioAutenticacion = servicioAutenticacion;
-        this.server = HttpServer.create(new InetSocketAddress(puerto), 0);
+        this.server = HttpServer.create(
+                new InetSocketAddress(InetAddress.getByAddress(new byte[] {127, 0, 0, 1}), puerto), 0);
         this.server.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         registrarRutas();
     }
@@ -220,12 +224,22 @@ public class ServidorHTTP {
         return server.getAddress().getPort();
     }
 
+    public InetSocketAddress getDireccionEnlace() {
+        return server.getAddress();
+    }
+
     private void manejarLogin(HttpExchange exchange) throws IOException {
         if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
             enviarError(exchange, 405, "METODO_NO_PERMITIDO", "Use POST para iniciar sesión.");
             return;
         }
-        String cuerpo = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        String cuerpo;
+        try {
+            cuerpo = leerCuerpoAutenticacion(exchange);
+        } catch (CuerpoAutenticacionDemasiadoGrande error) {
+            responderCuerpoAutenticacionDemasiadoGrande(exchange);
+            return;
+        }
         Map<String, String> datos = JsonUtil.parsearObjetoPlano(cuerpo);
         ResultadoAutenticacion resultado = servicioAutenticacion.iniciarSesion(
                 datos.get("username"),
@@ -239,10 +253,46 @@ public class ServidorHTTP {
             enviarError(exchange, 405, "METODO_NO_PERMITIDO", "Use POST para iniciar sesión SSO.");
             return;
         }
-        String cuerpo = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        String cuerpo;
+        try {
+            cuerpo = leerCuerpoAutenticacion(exchange);
+        } catch (CuerpoAutenticacionDemasiadoGrande error) {
+            responderCuerpoAutenticacionDemasiadoGrande(exchange);
+            return;
+        }
         Map<String, String> datos = JsonUtil.parsearObjetoPlano(cuerpo);
         ResultadoAutenticacion resultado = servicioAutenticacion.iniciarSesionSSO(datos.get("ssoToken"));
         responderAutenticacion(exchange, resultado);
+    }
+
+    private String leerCuerpoAutenticacion(HttpExchange exchange)
+            throws IOException, CuerpoAutenticacionDemasiadoGrande {
+        String longitudDeclarada = exchange.getRequestHeaders().getFirst("Content-Length");
+        if (longitudDeclarada != null) {
+            long longitud;
+            try {
+                longitud = Long.parseLong(longitudDeclarada.trim());
+            } catch (NumberFormatException error) {
+                throw new IOException("Longitud de cuerpo de autenticación inválida", error);
+            }
+            if (longitud > MAX_CUERPO_AUTENTICACION_BYTES) {
+                throw new CuerpoAutenticacionDemasiadoGrande();
+            }
+        }
+        byte[] cuerpo = exchange.getRequestBody().readNBytes(MAX_CUERPO_AUTENTICACION_BYTES + 1);
+        if (cuerpo.length > MAX_CUERPO_AUTENTICACION_BYTES) {
+            throw new CuerpoAutenticacionDemasiadoGrande();
+        }
+        return new String(cuerpo, StandardCharsets.UTF_8);
+    }
+
+    private void responderCuerpoAutenticacionDemasiadoGrande(HttpExchange exchange) throws IOException {
+        enviarError(
+                exchange,
+                413,
+                "CUERPO_DEMASIADO_GRANDE",
+                "El cuerpo de autenticación supera el tamaño máximo permitido.");
+        exchange.close();
     }
 
     private void manejarValidarSesion(HttpExchange exchange) throws IOException {
@@ -343,5 +393,9 @@ public class ServidorHTTP {
         try (OutputStream os = exchange.getResponseBody()) {
             os.write(bytes);
         }
+    }
+
+    private static final class CuerpoAutenticacionDemasiadoGrande extends Exception {
+        private static final long serialVersionUID = 1L;
     }
 }

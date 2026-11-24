@@ -1,5 +1,23 @@
 # ISO26-ISO2-3B1.01
 
+## Modo de demostración
+
+El servidor escucha en `127.0.0.1` por defecto. Para cargar datos ficticios al iniciar, compila el módulo y activa `--demo`:
+
+```powershell
+mvn -pl servidor package
+java -cp servidor/target/classes es.uclm.esi.iso2.B101.servidor.api.AplicacionServidor --demo
+```
+
+También se puede indicar el puerto antes o después de la opción, por ejemplo `AplicacionServidor 8081 --demo`.
+Las credenciales locales de demostración son `paciente1` / `paciente123` y `medico1` / `medico123`.
+Los tokens SSO simulados disponibles son `sso-sescam-paciente1`, `sso-sescam-medico1`,
+`sso-sescam-admision1` y `sso-sescam-admin1`, únicamente en este modo.
+
+Los datos se generan en memoria con fechas relativas al día de arranque y desaparecen al detener el proceso.
+Sin `--demo`, la fábrica habitual no precarga esos datos y el SSO simulado no está habilitado.
+Este modo es exclusivamente académico y no es apto para uso clínico ni para exponer el servidor a una red.
+
 ## Consulta de disponibilidad de agendas
 
 El personal médico puede consultar los huecos libres de su agenda diaria mediante:

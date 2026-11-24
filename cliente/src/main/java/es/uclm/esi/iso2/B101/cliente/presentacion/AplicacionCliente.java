@@ -10,7 +10,7 @@ import java.util.Scanner;
  */
 public class AplicacionCliente {
 
-    public static final String URL_SERVIDOR_POR_DEFECTO = "http://localhost:8080";
+    public static final String URL_SERVIDOR_POR_DEFECTO = "http://127.0.0.1:8080";
 
     public static void main(String[] args) {
         String urlServidor = args.length > 0 ? args[0] : URL_SERVIDOR_POR_DEFECTO;

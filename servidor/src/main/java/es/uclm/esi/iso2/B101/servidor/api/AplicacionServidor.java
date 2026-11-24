@@ -1,5 +1,6 @@
 package es.uclm.esi.iso2.B101.servidor.api;
 
+import es.uclm.esi.iso2.B101.servidor.integracion.ProveedorSSO;
 import es.uclm.esi.iso2.B101.servidor.integracion.ProveedorSSOSimulado;
 import es.uclm.esi.iso2.B101.servidor.persistencia.AsociacionIdentidadesClinicas;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioCitasMemoria;
@@ -37,6 +38,7 @@ import java.io.IOException;
 import java.time.Clock;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -47,21 +49,51 @@ public class AplicacionServidor {
     public static final int PUERTO_POR_DEFECTO = 8080;
 
     public static void main(String[] args) throws IOException {
-        int puerto = args.length > 0 ? Integer.parseInt(args[0]) : PUERTO_POR_DEFECTO;
-        ServidorHTTP servidor = crearServidor(puerto);
+        int puerto = PUERTO_POR_DEFECTO;
+        boolean puertoConfigurado = false;
+        boolean modoDemostracion = false;
+        for (String argumento : args) {
+            if ("--demo".equals(argumento)) {
+                modoDemostracion = true;
+            } else if (!puertoConfigurado) {
+                puerto = Integer.parseInt(argumento);
+                puertoConfigurado = true;
+            } else {
+                throw new IllegalArgumentException("Uso: AplicacionServidor [puerto] [--demo]");
+            }
+        }
+        ServidorHTTP servidor = crearServidor(puerto, modoDemostracion);
         servidor.iniciar();
-        System.out.println("Servidor de Radiodiagnóstico SESCAM escuchando en http://localhost:" + servidor.getPuerto());
+        System.out.println("Servidor de Radiodiagnóstico escuchando en http://127.0.0.1:" + servidor.getPuerto());
+        if (modoDemostracion) {
+            System.out.println("Modo de demostración activo: datos ficticios; no apto para uso clínico.");
+        }
     }
 
     public static ServidorHTTP crearServidor(int puerto) throws IOException {
-        return crearServidor(puerto, Clock.systemUTC(), new RepositorioCitasMemoria());
+        return crearServidor(puerto, Clock.systemUTC(), new RepositorioCitasMemoria(), false);
+    }
+
+    public static ServidorHTTP crearServidor(int puerto, boolean modoDemostracion) throws IOException {
+        return crearServidor(puerto, Clock.systemUTC(), new RepositorioCitasMemoria(), modoDemostracion);
     }
 
     public static ServidorHTTP crearServidor(
             int puerto, Clock relojAutenticacion, RepositorioCitasMemoria repositorioCitas) throws IOException {
+        return crearServidor(puerto, relojAutenticacion, repositorioCitas, false);
+    }
+
+    private static ServidorHTTP crearServidor(
+            int puerto,
+            Clock relojAutenticacion,
+            RepositorioCitasMemoria repositorioCitas,
+            boolean modoDemostracion) throws IOException {
         Objects.requireNonNull(relojAutenticacion, "relojAutenticacion no puede ser nulo");
         Objects.requireNonNull(repositorioCitas, "repositorioCitas no puede ser nulo");
         GestorContrasenas gestorContrasenas = new GestorContrasenas();
+        ProveedorSSO proveedorSSO = modoDemostracion
+                ? new ProveedorSSOSimulado()
+                : token -> Optional.empty();
         RepositorioSesionesMemoria repositorioSesiones = new RepositorioSesionesMemoria();
         ServicioAutenticacion servicioAutenticacion = new ServicioAutenticacion(
                 RepositorioUsuariosMemoria.conUsuariosPorDefecto(gestorContrasenas),
@@ -69,7 +101,7 @@ public class AplicacionServidor {
                 new RepositorioAuditoriaAccesoMemoria(),
                 gestorContrasenas,
                 new GeneradorTokens(),
-                new ProveedorSSOSimulado(),
+                proveedorSSO,
                 relojAutenticacion,
                 ServicioAutenticacion.MAX_INTENTOS_FALLIDOS_POR_DEFECTO,
                 ServicioAutenticacion.DURACION_BLOQUEO_POR_DEFECTO,
@@ -87,19 +119,30 @@ public class AplicacionServidor {
                 Clock.systemDefaultZone(),
                 new PoliticaPrescripcionDiagnosticaPorVinculo(
                         Map.of("medico-1", Set.of("paciente-1"))));
-        ServicioNotificaciones servicioNotificaciones =
-                new ServicioNotificaciones(new RepositorioNotificacionesMemoria());
+        RepositorioNotificacionesMemoria repositorioNotificaciones = new RepositorioNotificacionesMemoria();
+        ServicioNotificaciones servicioNotificaciones = new ServicioNotificaciones(repositorioNotificaciones);
         RepositorioHistorialPruebasMemoria repositorioHistorialPruebas =
                 new RepositorioHistorialPruebasMemoria();
         ServicioHistorialPruebas servicioHistorialPruebas =
                 new ServicioHistorialPruebas(repositorioHistorialPruebas);
         RepositorioIncidenciasMemoria repositorioIncidencias = new RepositorioIncidenciasMemoria();
         ServicioIncidencias servicioIncidencias = new ServicioIncidencias(repositorioIncidencias);
+        RepositorioEncuestasSatisfaccionMemoria repositorioEncuestas =
+                new RepositorioEncuestasSatisfaccionMemoria();
         ServicioEncuestasSatisfaccion servicioEncuestas = new ServicioEncuestasSatisfaccion(
-                new RepositorioEncuestasSatisfaccionMemoria(),
-                new RepositorioRespuestasEncuestasMemoria());
-        ServicioSeguimientos servicioSeguimientos =
-                new ServicioSeguimientos(new RepositorioSeguimientosMemoria());
+                repositorioEncuestas, new RepositorioRespuestasEncuestasMemoria());
+        RepositorioSeguimientosMemoria repositorioSeguimientos = new RepositorioSeguimientosMemoria();
+        ServicioSeguimientos servicioSeguimientos = new ServicioSeguimientos(repositorioSeguimientos);
+        if (modoDemostracion) {
+            DatosDemostracion.cargar(
+                    Clock.systemDefaultZone(),
+                    repositorioCitas,
+                    repositorioNotificaciones,
+                    repositorioHistorialPruebas,
+                    repositorioIncidencias,
+                    repositorioEncuestas,
+                    repositorioSeguimientos);
+        }
         Map<String, Set<String>> pacientesPorMedico = Map.of("medico-1", Set.of("paciente-1"));
         ServicioPrescripcionesSeguimiento servicioPrescripcionesSeguimiento =
                 new ServicioPrescripcionesSeguimiento(

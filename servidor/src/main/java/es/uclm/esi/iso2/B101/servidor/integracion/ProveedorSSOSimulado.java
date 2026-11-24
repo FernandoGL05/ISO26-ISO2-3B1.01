@@ -5,7 +5,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Implementación simulada del proveedor SSO corporativo para desarrollo y pruebas.
+ * Proveedor SSO ficticio reservado al modo de demostración; no valida identidades reales.
  */
 public class ProveedorSSOSimulado implements ProveedorSSO {
 
