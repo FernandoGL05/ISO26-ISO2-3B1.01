@@ -7,6 +7,7 @@ import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioAuditoriaAccesoMem
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioEncuestasSatisfaccionMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioHistorialPruebasMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioIncidenciasMemoria;
+import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioInformesPruebaMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioNecesidadesCitaSeguimientoMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioNotificacionesMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioPrescripcionesDiagnosticasMemoria;
@@ -25,10 +26,12 @@ import es.uclm.esi.iso2.B101.servidor.servicio.ServicioCitas;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioEncuestasSatisfaccion;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioHistorialPruebas;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioIncidencias;
+import es.uclm.esi.iso2.B101.servidor.servicio.ServicioInformesPrueba;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioNotificaciones;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioPrescripcionesDiagnosticas;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioPrescripcionesSeguimiento;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioSeguimientos;
+import es.uclm.esi.iso2.B101.servidor.servicio.ServicioRealizacionPruebas;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioAutenticacion;
 import java.io.IOException;
 import java.time.Clock;
@@ -75,10 +78,12 @@ public class AplicacionServidor {
                         Map.of("medico-1", Set.of("paciente-1"))));
         ServicioNotificaciones servicioNotificaciones =
                 new ServicioNotificaciones(new RepositorioNotificacionesMemoria());
+        RepositorioHistorialPruebasMemoria repositorioHistorialPruebas =
+                new RepositorioHistorialPruebasMemoria();
         ServicioHistorialPruebas servicioHistorialPruebas =
-                new ServicioHistorialPruebas(new RepositorioHistorialPruebasMemoria());
-        ServicioIncidencias servicioIncidencias =
-                new ServicioIncidencias(new RepositorioIncidenciasMemoria());
+                new ServicioHistorialPruebas(repositorioHistorialPruebas);
+        RepositorioIncidenciasMemoria repositorioIncidencias = new RepositorioIncidenciasMemoria();
+        ServicioIncidencias servicioIncidencias = new ServicioIncidencias(repositorioIncidencias);
         ServicioEncuestasSatisfaccion servicioEncuestas = new ServicioEncuestasSatisfaccion(
                 new RepositorioEncuestasSatisfaccionMemoria(),
                 new RepositorioRespuestasEncuestasMemoria());
@@ -93,6 +98,13 @@ public class AplicacionServidor {
                         (medicoId, pacienteId) ->
                                 pacientesPorMedico.getOrDefault(medicoId, Set.of()).contains(pacienteId));
         ServicioAgendas servicioAgendas = new ServicioAgendas(repositorioCitas);
+        ServicioInformesPrueba servicioInformesPrueba = new ServicioInformesPrueba(
+                repositorioHistorialPruebas,
+                new RepositorioInformesPruebaMemoria());
+        ServicioRealizacionPruebas servicioRealizacionPruebas = new ServicioRealizacionPruebas(
+                repositorioCitas,
+                repositorioHistorialPruebas,
+                repositorioIncidencias);
         AutorizadorPrescripcionesPorSesion autorizadorPrescripciones =
                 new AutorizadorPrescripcionesPorSesion(autenticadorSesion, asociaciones);
 
@@ -115,6 +127,9 @@ public class AplicacionServidor {
                 new AutorizadorSeguimientosPorSesion(autenticadorSesion, asociaciones),
                 servicioPrescripcionesSeguimiento,
                 new AutorizadorPrescripcionesSeguimientoPorSesion(autenticadorSesion, asociaciones),
-                servicioAgendas);
+                servicioAgendas,
+                servicioInformesPrueba,
+                new AutorizadorInformesPruebaPorSesion(autenticadorSesion, asociaciones),
+                servicioRealizacionPruebas);
     }
 }
