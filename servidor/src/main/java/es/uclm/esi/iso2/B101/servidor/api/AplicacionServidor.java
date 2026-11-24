@@ -7,8 +7,10 @@ import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioAuditoriaAccesoMem
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioEncuestasSatisfaccionMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioHistorialPruebasMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioIncidenciasMemoria;
+import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioNecesidadesCitaSeguimientoMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioNotificacionesMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioPrescripcionesDiagnosticasMemoria;
+import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioPrescripcionesSeguimientoMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioRespuestasEncuestasMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioSolicitudesCitaMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioSesionesMemoria;
@@ -18,12 +20,14 @@ import es.uclm.esi.iso2.B101.servidor.seguridad.AutenticadorSesion;
 import es.uclm.esi.iso2.B101.servidor.seguridad.GeneradorTokens;
 import es.uclm.esi.iso2.B101.servidor.seguridad.GestorContrasenas;
 import es.uclm.esi.iso2.B101.servidor.servicio.PoliticaPrescripcionDiagnosticaPorVinculo;
+import es.uclm.esi.iso2.B101.servidor.servicio.ServicioAgendas;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioCitas;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioEncuestasSatisfaccion;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioHistorialPruebas;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioIncidencias;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioNotificaciones;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioPrescripcionesDiagnosticas;
+import es.uclm.esi.iso2.B101.servidor.servicio.ServicioPrescripcionesSeguimiento;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioSeguimientos;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioAutenticacion;
 import java.io.IOException;
@@ -61,8 +65,9 @@ public class AplicacionServidor {
                 Map.of("USR-001", "paciente-1"),
                 Map.of("USR-002", "medico-1"));
         AutenticadorSesion autenticadorSesion = new AutenticadorSesion(servicioAutenticacion);
-        ServicioCitas servicioCitas = new ServicioCitas(
-                new RepositorioCitasMemoria(), new RepositorioSolicitudesCitaMemoria());
+        RepositorioCitasMemoria repositorioCitas = new RepositorioCitasMemoria();
+        ServicioCitas servicioCitas =
+                new ServicioCitas(repositorioCitas, new RepositorioSolicitudesCitaMemoria());
         ServicioPrescripcionesDiagnosticas servicioPrescripciones = new ServicioPrescripcionesDiagnosticas(
                 new RepositorioPrescripcionesDiagnosticasMemoria(),
                 Clock.systemDefaultZone(),
@@ -79,6 +84,17 @@ public class AplicacionServidor {
                 new RepositorioRespuestasEncuestasMemoria());
         ServicioSeguimientos servicioSeguimientos =
                 new ServicioSeguimientos(new RepositorioSeguimientosMemoria());
+        Map<String, Set<String>> pacientesPorMedico = Map.of("medico-1", Set.of("paciente-1"));
+        ServicioPrescripcionesSeguimiento servicioPrescripcionesSeguimiento =
+                new ServicioPrescripcionesSeguimiento(
+                        new RepositorioPrescripcionesSeguimientoMemoria(),
+                        new RepositorioNecesidadesCitaSeguimientoMemoria(),
+                        Clock.systemDefaultZone(),
+                        (medicoId, pacienteId) ->
+                                pacientesPorMedico.getOrDefault(medicoId, Set.of()).contains(pacienteId));
+        ServicioAgendas servicioAgendas = new ServicioAgendas(repositorioCitas);
+        AutorizadorPrescripcionesPorSesion autorizadorPrescripciones =
+                new AutorizadorPrescripcionesPorSesion(autenticadorSesion, asociaciones);
 
         return new ServidorHTTP(
                 puerto,
@@ -86,7 +102,7 @@ public class AplicacionServidor {
                 servicioCitas,
                 new AutorizadorCitasPorSesion(autenticadorSesion, asociaciones),
                 servicioPrescripciones,
-                new AutorizadorPrescripcionesPorSesion(autenticadorSesion, asociaciones),
+                autorizadorPrescripciones,
                 servicioNotificaciones,
                 new AutorizadorNotificacionesPorSesion(autenticadorSesion, asociaciones),
                 servicioHistorialPruebas,
@@ -96,6 +112,9 @@ public class AplicacionServidor {
                 servicioEncuestas,
                 new AutorizadorEncuestasPorSesion(autenticadorSesion, asociaciones),
                 servicioSeguimientos,
-                new AutorizadorSeguimientosPorSesion(autenticadorSesion, asociaciones));
+                new AutorizadorSeguimientosPorSesion(autenticadorSesion, asociaciones),
+                servicioPrescripcionesSeguimiento,
+                new AutorizadorPrescripcionesSeguimientoPorSesion(autenticadorSesion, asociaciones),
+                servicioAgendas);
     }
 }
