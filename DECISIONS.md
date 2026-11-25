@@ -101,3 +101,24 @@
 - **Alternativas:** duplicar la configuración para demo, precargar fixtures en toda ejecución o habilitar el proveedor SSO simulado en el modo normal.
 - **Motivo:** hacer reproducibles los flujos de presentación y conservar el aislamiento de las pruebas con datos propios, reduciendo la exposición accidental del servidor.
 - **Consecuencias y límites:** la sesión se comparte entre casos de uso y los repositorios relacionados enlazan citas, historial e incidencias. Los datos siguen siendo volátiles, las identidades y cuentas son ficticias, el transporte no usa TLS y la configuración es académica, no clínica. La cobertura de las operaciones no es exhaustiva.
+
+
+## D-013 · Gestión de lista de espera (CU18)
+- **Fecha:** 25/11/2026 · **Responsable:** Ernesto
+- **Contexto:** gestionar la lista de espera y asignar citas desde admisión.
+- **Decisión:** implementar servidor y cliente HTTP con repositorios en memoria y autenticación común, restringiendo el acceso al rol ADMISION. Ordenar las entradas por prioridad y antigüedad, evitar duplicados pendientes y comprobar solapamientos mediante la duración de las citas.
+- **Alternativas:** persistencia en base de datos y asignación automática de huecos.
+- **Motivo:** mantener la arquitectura existente y desarrollar un primer incremento verificable.
+- **Validación:** `mvn -B clean verify`: 345 pruebas superadas, 47 nuevas y comprobaciones JaCoCo correctas.
+- **Limitaciones:** almacenamiento temporal, sin interfaz gráfica ni validación contra horarios configurados. Admisión indica el intervalo. La comprobación de solapamientos se aplica a `reservar`, no al método general `guardar`.
+
+### Uso de IA
+Se utilizó ChatGPT como apoyo al desarrollo y las pruebas.
+Prompt resumido de la conversación:
+
+“Implementa el CU18 en Java 21 siguiendo la arquitectura
+cliente-servidor existente. Permite gestionar la lista por
+prioridad y antigüedad, asignar citas sin solapamientos y
+reutilizar la autenticación común. Incluye validaciones,
+pruebas de concurrencia e integración y verifica el proyecto
+con Maven.”
