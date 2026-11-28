@@ -1,4 +1,4 @@
-package es.uclm.esi.iso2.B101.cliente.cu10;
+package es.uclm.esi.iso2.B101.cliente.cu11;
 
 import java.io.IOException;
 import java.net.URI;
