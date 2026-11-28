@@ -15,6 +15,7 @@ import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioAuditoriaAccesoMem
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioCitasMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioEncuestasSatisfaccionMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioHistorialPruebasMemoria;
+import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioHorariosMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioIncidenciasMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioInformesPruebaMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioListaEsperaMemoria;
@@ -37,6 +38,7 @@ import es.uclm.esi.iso2.B101.servidor.servicio.ServicioAutenticacion;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioCitas;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioEncuestasSatisfaccion;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioHistorialPruebas;
+import es.uclm.esi.iso2.B101.servidor.servicio.ServicioHorarios;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioIncidencias;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioInformesPrueba;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioListaEspera;
@@ -211,8 +213,11 @@ public class AplicacionServidor {
                                 pacientesPorMedico.getOrDefault(
                                         medicoId, Set.of()).contains(pacienteId));
 
+        RepositorioHorariosMemoria repositorioHorarios =
+                new RepositorioHorariosMemoria();
+
         ServicioAgendas servicioAgendas =
-                new ServicioAgendas(repositorioCitas);
+                new ServicioAgendas(repositorioCitas, repositorioHorarios);
 
         ServicioInformesPrueba servicioInformesPrueba =
                 new ServicioInformesPrueba(
@@ -282,6 +287,12 @@ public class AplicacionServidor {
                 servicioListaEspera,
                 servicioAsignacion,
                 AutorizadorListaEspera.porSesion(autenticadorSesion));
+
+        ServicioHorarios servicioHorarios =
+                new ServicioHorarios(repositorioHorarios);
+        servidor.registrarHorarios(
+                servicioHorarios,
+                AutorizadorHorarios.porSesion(autenticadorSesion));
 
         return servidor;
     }

@@ -122,3 +122,16 @@ prioridad y antigüedad, asignar citas sin solapamientos y
 reutilizar la autenticación común. Incluye validaciones,
 pruebas de concurrencia e integración y verifica el proyecto
 con Maven.”
+
+## D-016 · Configuración de horarios operativos (CU22)
+- **Fecha:** 28/11/2026 · **Responsable:** Javier Herreros Pinilla
+- **Contexto:** el actor Administrador debe poder configurar horarios operativos de salas, equipos y médicos (`RF22`/`CU22`) integrados con la autenticación común (`CU01`) y las agendas (`ServicioAgendas`) en una PR independiente.
+- **Decisión:** implementar `TipoRecursoHorario` (`SALA`, `EQUIPO`, `MEDICO`), `HorarioOperativo` con detección de solapamientos, `RepositorioHorarios` en memoria, `ServicioHorarios`, sobrecarga compatible hacia atrás en `ServicioAgendas` (`consultarDisponibilidadConHorarios`), `HorariosHttpHandler` (`/api/horarios`) protegido con `AutorizadorHorarios.porSesion(AutenticadorSesion)` para rol `ADMINISTRADOR` y `ClienteHorariosHttp` (`AutoCloseable`) en `cliente.cu22`, conectado en `AplicacionServidor` y `ServidorHTTP`.
+- **Alternativas:** modificar el constructor existente de `ServicioAgendas` o permitir solapamientos en turnos activos.
+- **Motivo:** preservar compatibilidad con el código y pruebas existentes (`CU10`/`CU18`) y evitar dobles asignaciones de franjas operativas.
+- **Consecuencias:** CRUD, prevención de solapamientos e integración con `ServicioAgendas` verificados con `mvn -B clean verify`; almacenamiento volátil en memoria.
+
+### Uso de IA
+Se utilizó un agente de IA para implementar y probar el caso de uso CU22 integrado con `CU01` y `ServicioAgendas` en una rama y PR independiente:
+
+“Implementa el caso de uso 22 (Configurar horarios) integrado con la autenticación existente y las agendas del proyecto, generando los tests JUnit y subiendo una PR independiente.”
