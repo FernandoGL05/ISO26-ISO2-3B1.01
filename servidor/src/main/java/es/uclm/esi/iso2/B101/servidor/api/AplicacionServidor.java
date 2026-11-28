@@ -22,6 +22,7 @@ import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioNecesidadesCitaSeg
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioNotificacionesMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioPrescripcionesDiagnosticasMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioPrescripcionesSeguimientoMemoria;
+import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioProtocolosMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioRespuestasEncuestasMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioSeguimientosMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioSesionesMemoria;
@@ -43,6 +44,7 @@ import es.uclm.esi.iso2.B101.servidor.servicio.ServicioListaEspera;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioNotificaciones;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioPrescripcionesDiagnosticas;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioPrescripcionesSeguimiento;
+import es.uclm.esi.iso2.B101.servidor.servicio.ServicioProtocolos;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioRealizacionPruebas;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioSeguimientos;
 
@@ -282,6 +284,14 @@ public class AplicacionServidor {
                 servicioListaEspera,
                 servicioAsignacion,
                 AutorizadorListaEspera.porSesion(autenticadorSesion));
+
+        RepositorioProtocolosMemoria repositorioProtocolos =
+                new RepositorioProtocolosMemoria();
+        ServicioProtocolos servicioProtocolos =
+                new ServicioProtocolos(repositorioProtocolos);
+        servidor.registrarProtocolos(
+                servicioProtocolos,
+                AutorizadorProtocolos.porSesion(autenticadorSesion));
 
         return servidor;
     }
