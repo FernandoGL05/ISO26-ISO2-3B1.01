@@ -122,3 +122,16 @@ prioridad y antigüedad, asignar citas sin solapamientos y
 reutilizar la autenticación común. Incluye validaciones,
 pruebas de concurrencia e integración y verifica el proyecto
 con Maven.”
+
+## D-015 · Configuración de protocolos clínicos y técnicos (CU21)
+- **Fecha:** 28/11/2026 · **Responsable:** Javier Herreros Pinilla
+- **Contexto:** el actor Administrador necesita configurar protocolos clínicos y técnicos asociados a tipos de prueba (`RF21`/`CU21`), integrados con la autenticación común de `CU01` y en una PR independiente.
+- **Decisión:** implementar `Protocolo` con versionado incremental al actualizar, `RepositorioProtocolos` en memoria, `ServicioProtocolos` con predicado inyectable `existeTipoPrueba` (desacoplado para permitir una PR independiente y conectable a `RepositorioTiposPrueba`), `ProtocolosHttpHandler` (`/api/protocolos`) protegido con `AutorizadorProtocolos.porSesion(AutenticadorSesion)` para rol `ADMINISTRADOR` y `ClienteProtocolosHttp` (`AutoCloseable`) en `cliente.cu21`, registrado en `AplicacionServidor` y `ServidorHTTP`.
+- **Alternativas:** acoplar directamente `ServicioProtocolos` a `RepositorioTiposPrueba` dentro de la misma PR.
+- **Motivo:** permitir la integración independiente de `CU21` respecto a `CU20` siguiendo la arquitectura `CU01`/`CU18`.
+- **Consecuencias:** alta, edición con incremento de versión, filtrado por `tipoPruebaId` y cambio de estado verificados de extremo a extremo con `mvn -B clean verify`; almacenamiento volátil en memoria.
+
+### Uso de IA
+Se utilizó un agente de IA para implementar y probar el caso de uso CU21 integrado con `CU01` en una rama y PR independiente:
+
+“Implementa el caso de uso 21 (Configurar protocolos) integrado con la autenticación existente y la estructura del proyecto, generando los tests JUnit y subiendo una PR independiente.”

@@ -27,6 +27,7 @@ import es.uclm.esi.iso2.B101.servidor.servicio.ServicioListaEspera;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioNotificaciones;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioPrescripcionesDiagnosticas;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioPrescripcionesSeguimiento;
+import es.uclm.esi.iso2.B101.servidor.servicio.ServicioProtocolos;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioRealizacionPruebas;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioSeguimientos;
 
@@ -212,6 +213,12 @@ public class ServidorHTTP {
             AutorizadorListaEspera autorizador) {
         ListaEsperaHttpHandler.registrarEn(
                 server, gestion, asignacion, autorizador);
+    }
+
+    public void registrarProtocolos(
+            ServicioProtocolos servicio,
+            AutorizadorProtocolos autorizador) {
+        ProtocolosHttpHandler.registrarEn(server, servicio, autorizador);
     }
 
     private void registrarRutas() {
