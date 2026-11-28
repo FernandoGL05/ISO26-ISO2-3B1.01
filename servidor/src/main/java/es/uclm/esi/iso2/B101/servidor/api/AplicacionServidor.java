@@ -26,6 +26,7 @@ import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioRespuestasEncuesta
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioSeguimientosMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioSesionesMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioSolicitudesCitaMemoria;
+import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioTiposPruebaMemoria;
 import es.uclm.esi.iso2.B101.servidor.persistencia.RepositorioUsuariosMemoria;
 import es.uclm.esi.iso2.B101.servidor.seguridad.AutenticadorSesion;
 import es.uclm.esi.iso2.B101.servidor.seguridad.GeneradorTokens;
@@ -45,6 +46,7 @@ import es.uclm.esi.iso2.B101.servidor.servicio.ServicioPrescripcionesDiagnostica
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioPrescripcionesSeguimiento;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioRealizacionPruebas;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioSeguimientos;
+import es.uclm.esi.iso2.B101.servidor.servicio.ServicioTiposPrueba;
 
 /**
  * Punto de entrada del servidor de Radiodiagnostico del SESCAM.
@@ -282,6 +284,14 @@ public class AplicacionServidor {
                 servicioListaEspera,
                 servicioAsignacion,
                 AutorizadorListaEspera.porSesion(autenticadorSesion));
+
+        RepositorioTiposPruebaMemoria repositorioTiposPrueba =
+                new RepositorioTiposPruebaMemoria();
+        ServicioTiposPrueba servicioTiposPrueba =
+                new ServicioTiposPrueba(repositorioTiposPrueba);
+        servidor.registrarTiposPrueba(
+                servicioTiposPrueba,
+                AutorizadorTiposPrueba.porSesion(autenticadorSesion));
 
         return servidor;
     }

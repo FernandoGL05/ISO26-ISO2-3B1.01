@@ -29,6 +29,7 @@ import es.uclm.esi.iso2.B101.servidor.servicio.ServicioPrescripcionesDiagnostica
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioPrescripcionesSeguimiento;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioRealizacionPruebas;
 import es.uclm.esi.iso2.B101.servidor.servicio.ServicioSeguimientos;
+import es.uclm.esi.iso2.B101.servidor.servicio.ServicioTiposPrueba;
 
 /**
  * Servidor HTTP de la aplicacion de radiodiagnostico.
@@ -212,6 +213,12 @@ public class ServidorHTTP {
             AutorizadorListaEspera autorizador) {
         ListaEsperaHttpHandler.registrarEn(
                 server, gestion, asignacion, autorizador);
+    }
+
+    public void registrarTiposPrueba(
+            ServicioTiposPrueba servicio,
+            AutorizadorTiposPrueba autorizador) {
+        TiposPruebaHttpHandler.registrarEn(server, servicio, autorizador);
     }
 
     private void registrarRutas() {
