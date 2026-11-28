@@ -122,3 +122,16 @@ prioridad y antigüedad, asignar citas sin solapamientos y
 reutilizar la autenticación común. Incluye validaciones,
 pruebas de concurrencia e integración y verifica el proyecto
 con Maven.”
+
+## D-014 · Configuración del catálogo de tipos de prueba (CU20)
+- **Fecha:** 28/11/2026 · **Responsable:** Javier Herreros Pinilla
+- **Contexto:** el actor Administrador debe poder configurar el catálogo de tipos de prueba diagnóstica y sus atributos (`RF20`/`CU20`) de forma integrada con la autenticación común de `CU01` y en una rama/PR independiente.
+- **Decisión:** implementar `TipoPrueba` (reutilizando `PrioridadPrueba` y exigiendo consentimiento informado cuando requiere contraste), `RepositorioTiposPrueba` en memoria, `ServicioTiposPrueba` con control de unicidad de nombre, `TiposPruebaHttpHandler` (`/api/tipos-prueba`) protegido con `AutorizadorTiposPrueba.porSesion(AutenticadorSesion)` para rol `ADMINISTRADOR` y `ClienteTiposPruebaHttp` (`AutoCloseable`) en `cliente.cu20`, conectado en `AplicacionServidor` y `ServidorHTTP`.
+- **Alternativas:** persistencia en base de datos o autorización desacoplada sin `AutenticadorSesion`.
+- **Motivo:** seguir la arquitectura y patrón de integración de `CU01` y `CU18` (`D-004`, `D-005`, `D-006`, `D-013`).
+- **Consecuencias:** CRUD y activación/desactivación verificados de extremo a extremo con `mvn -B clean verify`; almacenamiento volátil en memoria.
+
+### Uso de IA
+Se utilizó un agente de IA para implementar y probar el caso de uso CU20 integrado con `CU01` en una rama y PR independiente:
+
+“Implementa el caso de uso 20 (Configurar tipos de prueba) integrado con la autenticación existente y la estructura del proyecto, generando los tests JUnit y subiendo una PR independiente.”
